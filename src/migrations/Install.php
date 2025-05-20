@@ -47,8 +47,7 @@ class Install extends Migration
 			'cookieId' => $this->string(255),
 			'domain' => $this->string(255),
 			'duration' => $this->string(255),
-			'urlPattern' => $this->string(255),
-			'description' => $this->string(),
+			'description' => $this->text(),
             'PRIMARY KEY(id)',
         ]);
     }

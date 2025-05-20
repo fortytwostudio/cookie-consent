@@ -50,7 +50,6 @@ class CookieQuery extends ElementQuery
             "forty_cookies_enabled.cookieId",
             "forty_cookies_enabled.domain",
             "forty_cookies_enabled.duration",
-			"forty_cookies_enabled.urlPattern",
 			"forty_cookies_enabled.description",
         ]);
 
