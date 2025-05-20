@@ -1,10 +1,10 @@
-# Cookie Content plugin for Craft CMS 5.x
+# Cookie Content plugin for Craft CMS 4.x
 
 Manage Cookies through the CMS.
 
 ## Requirements
 
-This plugin requires Craft CMS 5+.
+This plugin requires Craft CMS 4+.
 
 ## Installation
 

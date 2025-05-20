@@ -1,0 +1,195 @@
+{% extends "forty-cookieconsent/_layouts/_settings" %}
+{% import "_includes/forms" as forms %}
+{% do view.registerAssetBundle("fortytwostudio\\cookieconsent\\assets\\SettingsAssets") %}
+
+{% set title = "Cookie Consent" %}
+{% set selectedSubnavItem = "settings" %}
+
+{% set fullPageForm = true %}
+
+{% set tabs = {
+	"tab01-generic": {
+		label: "Generic" | t("forty-cookieconsent"),
+		url: "#tab01-generic"
+	},
+	"tab02-preferences": {
+		label: "Preferences" | t("forty-cookieconsent"),
+		url: "#tab02-preferences"
+	},
+	"tab03-trigger": {
+		label: "Trigger Button" | t("forty-cookieconsent"),
+		url: "#tab03-trigger"
+	},
+} %}
+
+{% set selectedTab = craft.app.request.getParam("tab", "tab01-generic") %}
+
+{% block content %}
+	{{ actionInput("plugins/save-plugin-settings") }}
+	{{ hiddenInput("pluginHandle", "forty-cookieconsent") }}
+
+	<div id="fields">
+		<div id="tab01-generic" class="flex-fields" data-id="tab01-generic" role="tabpanel" aria-labelledby="tab-tab01-generic">
+			{% namespace "settings" %}
+
+				{{ forms.colorField({
+					label: "Background Colour",
+					id: "popupBackgroundColour",
+					name: "popupBackgroundColour",
+					value: settings.popupBackgroundColour,
+				}) }}
+
+				{{ forms.colorField({
+					label: "Text Colour",
+					id: "popupTextColour",
+					name: "popupTextColour",
+					value: settings.popupTextColour,
+				}) }}
+
+				<hr>
+
+				<div class="field-set">
+					{{ forms.colorField({
+						label: "Button Background Colour",
+						id: "buttonBackground",
+						name: "buttonBackground",
+						value: settings.buttonBackground,
+					}) }}
+
+					{{ forms.colorField({
+						label: "Hover - Button Background Colour",
+						id: "hoverButtonBackground",
+						name: "hoverButtonBackground",
+						value: settings.hoverButtonBackground,
+					}) }}
+				</div>
+
+				<div class="field-set">
+					{{ forms.colorField({
+						label: "Button Text Colour",
+						id: "buttonText",
+						name: "buttonText",
+						value: settings.buttonText,
+					}) }}
+
+					{{ forms.colorField({
+						label: "Hover - Button Text Colour",
+						id: "hoverButtonText",
+						name: "hoverButtonText",
+						value: settings.hoverButtonText,
+					}) }}
+				</div>
+
+				<div class="field-set">
+					{{ forms.colorField({
+						label: "Manage Button Background Colour",
+						id: "manageBackground",
+						name: "manageBackground",
+						value: settings.manageBackground,
+					}) }}
+					{{ forms.colorField({
+						label: "Hover - Manage Button Background Colour",
+						id: "hoverManageBackground",
+						name: "hoverManageBackground",
+						value: settings.hoverManageBackground,
+					}) }}
+				</div>
+
+				<div class="field-set">
+					{{ forms.colorField({
+						label: "Manage Button Text Colour",
+						id: "manageText",
+						name: "manageText",
+						value: settings.manageText,
+					}) }}
+					{{ forms.colorField({
+						label: "Hover - Manage Button Text Colour",
+						id: "hoverManageText",
+						name: "hoverManageText",
+						value: settings.hoverManageText,
+					}) }}
+				</div>
+
+				<hr>
+
+				{{ forms.colorField({
+					label: "Footer Background Colour",
+					id: "footerBackground",
+					name: "footerBackground",
+					value: settings.footerBackground,
+				}) }}
+
+				<div class="field-set">
+					{{ forms.colorField({
+						label: "Footer Text Colour",
+						id: "footerText",
+						name: "footerText",
+						value: settings.footerText,
+					}) }}
+					{{ forms.colorField({
+						label: "Hover - Footer Text Colour",
+						id: "hoverFooterText",
+						name: "hoverFooterText",
+						value: settings.hoverFooterText,
+					}) }}
+				</div>
+
+			{% endnamespace %}
+		</div>
+		<div id="tab02-preferences" class="flex-fields hidden" data-id="tab02-preferences" role="tabpanel" aria-labelledby="tab-tab02-preferences">
+			{% namespace "settings" %}
+				<div class="field-set">
+					{{ forms.colorField({
+						label: "Toggle Background",
+						id: "toggleBackground",
+						name: "toggleBackground",
+						value: settings.toggleBackground,
+					}) }}
+
+					{{ forms.colorField({
+						label: "Hover - Toggle Background",
+						id: "hoverToggleBackground",
+						name: "hoverToggleBackground",
+						value: settings.hoverToggleBackground,
+					}) }}
+				</div>
+
+				<div class="field-set">
+					{{ forms.colorField({
+						label: "Toggle Text",
+						id: "toggleText",
+						name: "toggleText",
+						value: settings.toggleText,
+					}) }}
+
+					{{ forms.colorField({
+						label: "Hover - Toggle Text",
+						id: "hoverToggleText",
+						name: "hoverToggleText",
+						value: settings.hoverToggleText,
+					}) }}
+				</div>
+
+			{% endnamespace %}
+		</div>
+		<div id="tab03-trigger" class="flex-fields hidden" data-id="tab03-trigger" role="tabpanel" aria-labelledby="tab-tab03-trigger">
+			{% namespace "settings" %}
+
+				{{ forms.colorField({
+					label: "Background Colour",
+					id: "triggerBackground",
+					name: "triggerBackground",
+					value: settings.triggerBackground,
+				}) }}
+
+				{{ forms.colorField({
+					label: "Icon Colour",
+					id: "triggerFill",
+					name: "triggerFill",
+					value: settings.triggerFill,
+				}) }}
+
+			{% endnamespace %}
+		</div>
+	</div>
+{% endblock %}

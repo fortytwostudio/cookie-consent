@@ -1,0 +1,47 @@
+{
+	"name": "fortytwo-studio/cookie-consent",
+	"description": "Craft CMS Plugin for managing cookies.",
+	"type": "craft-plugin",
+	"version": "1.0.0",
+	"license": "MIT",
+	"keywords": [
+		"craftcms",
+		"cookie-consent",
+		"cookie-management",
+		"gdpr",
+		"consent-mode",
+		"google-consent-mode",
+		"craftcms-plugin",
+		"privacy",
+		"user-consent"
+	],
+	"authors": [
+		{
+			"name": "Forty Two studio",
+			"homepage": "https://fortytwo.studio"
+		}
+	],
+	"require": {
+		"craftcms/cms": "^4.0.0"
+	},
+	"autoload": {
+		"psr-4": {
+			"fortytwostudio\\cookieconsent\\": "src/"
+		}
+	},
+	"extra": {
+		"name": "Cookie Consent",
+		"handle": "forty-cookieconsent",
+		"developer": "Forty Two Studio",
+		"developerUrl": "https://fortytwo.studio",
+		"documentationUrl": "https://github.com/fortytwostudio/cookie-consent/blob/main/README.md",
+		"changelogUrl": "https://raw.githubusercontent.com/fortytwostudio/cookie-consent/main/CHANGELOG.md",
+		"class": "fortytwostudio\\cookieconsent\\CookieConsent"
+	},
+	"config": {
+		"allow-plugins": {
+			"yiisoft/yii2-composer": true,
+			"craftcms/plugin-installer": true
+		}
+	}
+}

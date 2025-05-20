@@ -1,0 +1,15 @@
+@media screen and (min-width: 64rem) {
+	.field-set {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 1.5rem;
+	}
+
+	.flex-fields > .field-set:not(.error-summary) {
+		margin-block: 0 !important;
+	}
+
+	.field-set .field + .field {
+		margin: 0;
+	}
+}

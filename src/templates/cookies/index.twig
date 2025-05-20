@@ -1,0 +1,9 @@
+{% extends "_layouts/elementindex" %}
+
+{% set title = "Enabled Cookies"|t("forty-cookieconsent") %}
+{% do view.registerAssetBundle("fortytwostudio\\cookieconsent\\assets\\IndexAssets") %}
+{% set elementType = "fortytwostudio\\cookieconsent\\elements\\CookieElement" %}
+
+{% do view.registerTranslations("app", [
+	"New Cookie",
+]) %}

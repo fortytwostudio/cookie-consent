@@ -1,0 +1,91 @@
+{% extends "_layouts/cp" %}
+
+{% set title = "Cookie Consent Guides" %}
+{% set selectedSubnavItem = "guide" %}
+{% do view.registerAssetBundle("fortytwostudio\\cookieconsent\\assets\\GuideAssets") %}
+
+
+{% set tabs = {
+	"tab01-howto": {
+		label: "How to use" | t("forty-cookieconsent"),
+		url: "#tab01-howto"
+	},
+	"tab02-settings": {
+		label: "Settings" | t("forty-cookieconsent"),
+		url: "#tab02-settings"
+	},
+} %}
+
+
+{% block content %}
+	<div id="tab01-howto" data-id="tab01-howto" role="tabpanel" aria-labelledby="tab-tab01-howto">
+
+		<div class="guide-block">
+			<h2>How does it work?</h2>
+
+			<p>The cookie consent banner automatically blocks all cookies from "talking" on your website until consent has been given.</p>
+
+			<h3>Categories</h3>
+			<p>When you add a cookie to the CMS section, you'll need to add which category it comes under.</p>
+			<p>This is very important as it will be used later when we add tracking codes.</p>
+		</div>
+		<div class="guide-block">
+			<h2>Adding Tracking scripts</h2>
+			<h3>Using a text field</h3>
+
+			<p>If using a text field, you'll need to add some attributes to each script tag to make sure the scripts are ignored on first load, or if the user clicks "Reject".</p>
+
+			<p>The following attributes are required on all scripts:</p>
+			<ul>
+				<li>type="text/plain"</li>
+				<li>data-category="your-category-name"</li>
+			</ul>
+
+			<p><strong>Before:</strong></p>
+			{% apply spaceless %}
+<pre>
+	<code class="language-javascript">
+		&lt;script&gt;
+			// Always executed
+		&lt;/script&gt;
+	</code>
+</pre>
+			{% endapply %}
+
+			<p><strong>After:</strong></p>
+			{% apply spaceless %}
+<pre>
+	<code>
+		&lt;script
+			type="text/plain"
+			data-category="analytics"&gt;
+			// Executed when the "analytics" category is enabled
+		&lt;/script&gt;
+	</code>
+</pre>
+			{% endapply %}
+
+			<h3>Using SEOMatic</h3>
+			<p>If you're using SEOMatic, you can add the attributes on each tracking type just above the code snippet in the CMS.</p>
+
+			<h3>How does this work?</h3>
+			<p>If the user clicks accept all, or selects certain categories to accept, it will remove the attributes from the script tag so then the website can allow those scripts.</p>
+		</div>
+	</div>
+
+	<div id="tab02-settings" class="hidden" data-id="tab02-settings" role="tabpanel" aria-labelledby="tab-tab02-settings">
+		<h2>General</h2>
+		<p>Choose whether or not to enable the popup (Recommended).</p>
+
+		<h2>Google</h2>
+		<p>Enable this if you which to include Google Consent Mode (Recommended).</p>
+
+		<h2>Customise</h2>
+		<p>You can customise all content within the Popup and Preferences banner for the cookies.</p>
+		<p>You can also choose a layout and position for each as well.</p>
+		<p>There is an option to change the cookie icon if needed. This will have to be an SVG.</p>
+
+		<h2>Colours</h2>
+		<p>You can personalise the colours used across the popup and preferences banner.</p>
+	</div>
+{% endblock %}

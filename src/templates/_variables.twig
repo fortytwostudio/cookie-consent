@@ -1,0 +1,84 @@
+{# Get Settings #}
+{% set settings = fortycookie.getSettings() %}
+
+{# Get all cookies #}
+{% set requiredCookies = fortycookie.getCookiesByType("necessary") %}
+{% set functionalCookies = fortycookie.getCookiesByType("functionality") %}
+{% set analyticsCookies = fortycookie.getCookiesByType("analytics") %}
+{% set performanceCookies = fortycookie.getCookiesByType("performance") %}
+{% set advertisementCookies = fortycookie.getCookiesByType("advertisement") %}
+{% set securityCookies = fortycookie.getCookiesByType("security") %}
+
+{# Get cookie Icon #}
+{% set cookieIcon = settings.triggerIcon ?
+	craft.assets.id(settings.triggerIcon).eagerly().one() | default(null) %}
+
+{% if cookieIcon %}
+	{% set cookieSVG = svg(cookieIcon) | e('js') %}
+{% else %}
+	{% set cookieSVG = null %}
+{% endif %}
+
+window.FortyCookieConsent = {
+	csrf: {
+		name: '{{ craft.app.config.general.csrfTokenName|e('js') }}',
+		value: '{{ craft.app.request.csrfToken|e('js') }}',
+	},
+	enabled: "{{ settings.isEnabled }}",
+	cookieIcon: "{{ cookieSVG }}",
+	title: "{{ settings.title }}",
+	description: "{{ settings.description }}",
+	footer: "{{ settings.footer }}",
+	consentLayout: "{{ settings.consentLayout }}",
+	consentPosition: "{{ settings.consentPosition }}",
+	consentEqualWeightButtons: {{ settings.consentEqualWeightButtons ? "true" : "false" }},
+	consentFlipButtons: {{ settings.consentFlipButtons ? "true" : "false" }},
+	internalTitle: "{{ settings.internalTitle }}",
+	internalDescription: "{{ settings.internalDescription }}",
+	requiredDescription: "{{ settings.requiredDescription }}",
+	functionalDescription: "{{ settings.functionalDescription }}",
+	analyticsDescription: "{{ settings.analyticsDescription }}",
+	performanceDescription: "{{ settings.performanceDescription }}",
+	advertisementDescription: "{{ settings.advertisementDescription }}",
+	securityDescription: "{{ settings.securityDescription }}",
+	moreTitle: "{{ settings.moreTitle }}",
+	moreDescription: "{{ settings.moreDescription }}",
+	preferencesLayout: "{{ settings.preferencesLayout }}",
+	preferencesPosition: "{{ settings.preferencesPosition }}",
+	preferencesEqualWeightButtons: {{ settings.preferencesEqualWeightButtons ? "true" : "false" }},
+	preferencesFlipButtons: {{ settings.preferencesFlipButtons ? "true" : "false" }},
+	sendGtag: {{ settings.sendGtag ? "true" : "false" }},
+	requiredCookies: "{{ requiredCookies | json_encode }}",
+	functionalCookies: "{{ functionalCookies | json_encode }}",
+	analyticsCookies: "{{ analyticsCookies | json_encode }}",
+	performanceCookies: "{{ performanceCookies | json_encode }}",
+	advertisementCookies: "{{ advertisementCookies | json_encode }}",
+	securityCookies: "{{ securityCookies | json_encode }}",
+	colours: {
+		popup: {
+			backgroundColour: "#{{ settings.popupBackgroundColour }}",
+			textColour: "#{{ settings.popupTextColour }}",
+			buttonBackground: "#{{ settings.buttonBackground }}",
+			hoverButtonBackground: "#{{ settings.hoverButtonBackground }}",
+			buttonText: "#{{ settings.buttonText }}",
+			hoverButtonText: "#{{ settings.hoverButtonText }}",
+			manageBackground: "#{{ settings.manageBackground }}",
+			hoverManageBackground: "#{{ settings.hoverManageBackground }}",
+			manageText: "#{{ settings.manageText }}",
+			hoverManageText: "#{{ settings.hoverManageText }}",
+			footerBackground: "#{{ settings.footerBackground }}",
+			footerText: "#{{ settings.footerText }}",
+			hoverFooterText: "#{{ settings.hoverFooterText }}",
+		},
+		modal: {
+			toggleBackground: "#{{ settings.toggleBackground }}",
+			hoverToggleBackground: "#{{ settings.hoverToggleBackground }}",
+			toggleText: "#{{ settings.toggleText }}",
+			hoverToggleText: "#{{ settings.hoverToggleText }}",
+		},
+		trigger: {
+			backgroundColour: "#{{ settings.triggerBackground }}",
+			fillColour: "#{{ settings.triggerFill }}",
+		}
+	}
+};
