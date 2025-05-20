@@ -2,12 +2,14 @@
 	<button
 		id="forty-cookie-modal-button"
 		class="hidden"
+		:class="triggerClass"
 		type="button"
 		v-on:click="$CC.showPreferences()"
 		aria-label="Show cookie preferences modal"
 		:style="{
 			'--trigger-bg': colours.trigger.backgroundColour,
 			'--trigger-fill': colours.trigger.fillColour,
+			'--trigger-position': triggerPosition,
 		}"
 	>
 		<div v-if="customIcon" v-html="customIcon"></div>
@@ -23,7 +25,8 @@ export default {
 	props: [
 		"colours",
 		"consentMode",
-		"icon"
+		"icon",
+		"triggerPosition",
 	],
 	components: {
 		CookieIcon,
@@ -34,6 +37,7 @@ export default {
 			popup: this.colours.popup,
 			modal: this.colours.modal,
 			icon: this.icon,
+			triggerPosition: this.triggerPosition,
 		};
 	},
 	mounted() {
@@ -46,18 +50,11 @@ export default {
 				return null
 			} else {
 				return this.icon;
-
-// 				var db = JSON.stringify(this.icon);
-// 				var db = JSON.parse(db);
-// 				var db = db.replace(/&quot;/gi, '"');
-// 				var db = db.replace(/&lt;/gi, '<');
-// 				var db = db.replace(/&gt;/gi, '>');
-//
-// 				console.log(db);
-//
-// 				return db;
 			}
 		},
+		triggerClass() {
+			return this.triggerPosition;
+		}
 	},
 	methods: {
 		updatePopupColors() {
@@ -136,7 +133,6 @@ export default {
 #forty-cookie-modal-button {
 	position: fixed;
 	bottom: 1rem;
-	left: 1rem;
 	width: 2.813rem;
 	height: 2.813rem;
 	background: var(--trigger-bg);
@@ -144,6 +140,15 @@ export default {
 	padding: 0.5rem;
 	border-radius: 100%;
 	z-index: 500;
+
+	&.left {
+		left: 1rem;
+	}
+
+	&.right {
+		right: 1rem;
+	}
+
 }
 
 #forty-cookie-modal-button.hidden {

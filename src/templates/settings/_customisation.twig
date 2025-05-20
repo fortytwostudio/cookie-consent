@@ -174,6 +174,16 @@
 					},
 				}) }}
 
+				{{ forms.selectField({
+					label: "Position"|t("convergine-contentbuddy"),
+					name: "triggerPosition",
+					value: settings.triggerPosition,
+					options: {
+						"left": "Left",
+						"right": "Right",
+					}
+				}) }}
+
 			{% endnamespace %}
 		</div>
 	</div>
