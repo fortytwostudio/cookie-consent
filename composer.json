@@ -2,7 +2,7 @@
 	"name": "fortytwo-studio/cookie-consent",
 	"description": "Craft CMS Plugin for managing cookies.",
 	"type": "craft-plugin",
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"license": "MIT",
 	"keywords": [
 		"craftcms",
@@ -22,7 +22,7 @@
 		}
 	],
 	"require": {
-		"craftcms/cms": "^4.0.0"
+		"craftcms/cms": "^5.0.0"
 	},
 	"autoload": {
 		"psr-4": {
