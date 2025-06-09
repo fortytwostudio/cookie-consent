@@ -236,6 +236,7 @@ class CookieConsent extends Plugin
 						$jsFile,
 						[
 							'position' => YiiView::POS_END,
+							'defer' => true,
 							'type' => 'module',
 						]
 					);
