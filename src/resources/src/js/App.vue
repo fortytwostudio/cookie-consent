@@ -143,6 +143,8 @@ export default {
 	color: var(--trigger-fill);
 	padding: 0.5rem;
 	border-radius: 100%;
+	border: 0;
+	line-height: 0;
 	z-index: 500;
 }
 
