@@ -73,6 +73,7 @@ class SettingsModel extends Model {
 
 	public string $triggerBackground = "000000";
 	public string $triggerFill = "FFFFFF";
+	public string $triggerPosition = "left";
 
 	// Functions
 	// ______________________________________

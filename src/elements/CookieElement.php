@@ -17,7 +17,6 @@ use fortytwostudio\cookieconsent\elements\fieldlayoutelements\TypeField;
 use fortytwostudio\cookieconsent\elements\fieldlayoutelements\CookieIdField;
 use fortytwostudio\cookieconsent\elements\fieldlayoutelements\DomainField;
 use fortytwostudio\cookieconsent\elements\fieldlayoutelements\DurationField;
-use fortytwostudio\cookieconsent\elements\fieldlayoutelements\UrlPatternField;
 use fortytwostudio\cookieconsent\elements\fieldlayoutelements\DescriptionField;
 
 use yii\db\Expression;
@@ -44,11 +43,6 @@ class CookieElement extends Element
 	 * @var ?int The duration of the cookie
 	 */
 	public ?string $duration = null;
-
-	/**
-	 * @var ?int The cookie's URL Pattern
-	 */
-	public ?string $urlPattern = null;
 
 	/**
 	 * @var ?int The cookies description
@@ -170,7 +164,6 @@ class CookieElement extends Element
 		$this->cookieId = $request->getBodyParam("cookieId");
 		$this->domain = $request->getBodyParam("domain");
 		$this->duration = $request->getBodyParam("duration");
-		$this->urlPattern = $request->getBodyParam("urlPattern");
 		$this->description = $request->getBodyParam("description");
 
 		// Add Data to database
@@ -186,7 +179,6 @@ class CookieElement extends Element
 				$record->cookieId = $this->cookieId;
 				$record->domain = $this->domain;
 				$record->duration = $this->duration;
-				$record->urlPattern = $this->urlPattern;
 				$record->description = $this->description;
 
 				$record->save(false);
@@ -197,7 +189,6 @@ class CookieElement extends Element
 				$record->cookieId = $this->cookieId;
 				$record->domain = $this->domain;
 				$record->duration = $this->duration;
-				$record->urlPattern = $this->urlPattern;
 				$record->description = $this->description;
 
 				$record->save(false);
@@ -241,7 +232,6 @@ class CookieElement extends Element
 			$event->fields[] = CookieIdField::class;
 			$event->fields[] = DomainField::class;
 			$event->fields[] = DurationField::class;
-			$event->fields[] = UrlPatternField::class;
 			$event->fields[] = DescriptionField::class;
 		}
 	}

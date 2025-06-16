@@ -20,6 +20,7 @@ async function createCookieDiv() {
 
 function createCookieApp() {
 	const props = {
+		triggerPosition: settings.triggerPosition,
 		consentMode: settings.sendGtag,
 		colours: settings.colours,
 		icon: settings.cookieIcon,

@@ -16,7 +16,6 @@ class CookieModel extends Model
 	public ?string $cookieId = null;
 	public ?string $domain = null;
 	public ?string $duration = null;
-	public ?string $urlPattern = null;
 	public ?string $description = null;
 
 
@@ -33,7 +32,6 @@ class CookieModel extends Model
 				'cookieId',
 				'domain',
 				'duration',
-				'urlPattern',
 				'description'
 			],
 		'required'];
