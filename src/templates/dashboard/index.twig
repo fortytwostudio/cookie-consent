@@ -3,13 +3,14 @@
 {% set title = "Cookie Consent" %}
 {% set selectedSubnavItem = "dashboard" %}
 {% set cpTrigger = craft.app.config.general.cpTrigger %}
+{% set logs = fortycookie.getLogs %}
 {% do view.registerAssetBundle("fortytwostudio\\cookieconsent\\assets\\DashboardAssets") %}
 
 {% block content %}
 	<div class="dashboard-blocks">
 		<div class="dashboard-block dashboard-block--chart">
 			<h2>Consent Logs</h2>
-			<div id="chart"></div>
+			<div id="chart" data-accepted="{{ logs.accepted }}" data-rejected="{{ logs.rejected }}" data-total="{{ logs.total }}"></div>
 		</div>
 		<div class="dashboard-block dashboard-block--stats">
 			<div id="stats">
