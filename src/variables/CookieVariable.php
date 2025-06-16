@@ -4,6 +4,7 @@ namespace fortytwostudio\cookieconsent\variables;
 use fortytwostudio\cookieconsent\CookieConsent;
 use fortytwostudio\cookieconsent\elements\CookieElement;
 use fortytwostudio\cookieconsent\elements\db\CookieQuery;
+use craft\db\Query;
 
 use Craft;
 use craft\helpers\UrlHelper;
@@ -27,11 +28,31 @@ class CookieVariable extends ServiceLocator
 			->all();
 
 		return $query;
-
 	}
 
 	public function getSettings()
 	{
 		return CookieConsent::$settings;
 	}
+	
+	public function getLogs()
+	{
+		$row = (new Query())
+			->select(['*'])
+			->from('{{%forty_cookies_tracked}}')
+			->one();
+		
+		$options = [];
+		
+		if ($row) {
+			$options = [
+				"accepted" => $row["accepted"],
+				"rejected" => $row["rejected"],
+				"total" => $row["accepted"] + $row["rejected"],
+			];
+		};
+		
+		return $options;
+	}
+	
 }
