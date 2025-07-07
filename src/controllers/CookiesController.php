@@ -19,7 +19,7 @@ class CookiesController extends Controller
 	// Protected Properties
 	// =========================================================================
 
-	protected array|bool|int $allowAnonymous = [];
+	protected array|bool|int $allowAnonymous = true;
 
 	public function actionIndex()
 	{
