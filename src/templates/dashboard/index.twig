@@ -10,7 +10,7 @@
 	<div class="dashboard-blocks">
 		<div class="dashboard-block dashboard-block--chart">
 			<h2>Consent Logs</h2>
-			<div id="chart" data-accepted="{{ logs.accepted }}" data-rejected="{{ logs.rejected }}" data-total="{{ logs.total }}"></div>
+			<div id="chart" data-accepted="{{ logs.accepted ?? 0 }}" data-rejected="{{ logs.rejected ?? 0 }}" data-total="{{ logs.total ?? 0 }}"></div>
 		</div>
 		<div class="dashboard-block dashboard-block--stats">
 			<div id="stats">

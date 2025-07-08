@@ -2,16 +2,12 @@ import ApexCharts from "apexcharts";
 import "../css/dashboard.css";
 
 async function initCharts() {
-	
 	const container = document.querySelector("#chart");
 	const accepted = container.getAttribute("data-accepted");
 	const rejected = container.getAttribute("data-rejected");
-	
+
 	var options = {
-		series: [
-			parseInt(accepted),
-			parseInt(rejected),
-		],
+		series: [parseInt(accepted), parseInt(rejected)],
 		fill: {
 			colors: ["#031c86", "#000"],
 		},
