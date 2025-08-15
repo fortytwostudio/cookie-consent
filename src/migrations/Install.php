@@ -33,22 +33,20 @@ class Install extends Migration
 		// User Clicks
 		$this->archiveTableIfExists('{{%forty_cookies_tracked}}');
 		$this->createTable('{{%forty_cookies_tracked}}', [
-			'id' => $this->integer()->notNull(),
+			'id' => $this->primaryKey(),
 			'accepted' => $this->integer()->notNull()->defaultValue(0),
 			'rejected' => $this->integer()->notNull()->defaultValue(0),
-			'PRIMARY KEY(id)',
 		]);
 
 		// Cookies
         $this->archiveTableIfExists('{{%forty_cookies_enabled}}');
         $this->createTable('{{%forty_cookies_enabled}}', [
-            'id' => $this->integer()->notNull(),
+            'id' => $this->primaryKey(),
 			'type' => $this->string(255),
 			'cookieId' => $this->string(255),
 			'domain' => $this->string(255),
 			'duration' => $this->string(255),
 			'description' => $this->text(),
-            'PRIMARY KEY(id)',
         ]);
     }
 

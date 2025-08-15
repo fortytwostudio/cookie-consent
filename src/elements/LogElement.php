@@ -86,7 +86,6 @@ class LogElement extends Element
 				$record->save(false);
 			} else {
 				$record = new LogRecord();
-				$record->id = (int)$this->id;
 				$record->accepted = $record->accepted + $this->accepted;
 				$record->rejected = $record->rejected + $this->rejected;
 

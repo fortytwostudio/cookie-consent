@@ -11,6 +11,7 @@ use craft\web\Controller;
 
 use fortytwostudio\cookieconsent\elements\CookieElement;
 use fortytwostudio\cookieconsent\models\CookieModel;
+use fortytwostudio\cookieconsent\records\LogRecord;
 
 use yii\db\Expression;
 
@@ -103,6 +104,22 @@ class CookiesController extends Controller
 	public function actionLogConsent() {
 		$this->requirePostRequest();
 
+		$table = '{{%forty_cookies_enabled}}';
+		$schema = Craft::$app->db->schema->getTableSchema($table);
+
+		if ($schema && isset($schema->columns['id'])) {
+			$idColumn = $schema->columns['id'];
+
+			// Will be true for MySQL auto_increment or Postgres identity
+			if ($idColumn->autoIncrement) {
+				Craft::info("✅ {$table}.id is auto-increment", "DowleyDev");
+			} else {
+				Craft::warning("⚠ {$table}.id is NOT auto-increment", "DowleyDev");
+			}
+		} else {
+			Craft::error("Table {$table} not found.", "DowleyDev");
+		}
+
 		$params = Craft::$app->getRequest()->getBodyParams();
 
 		$row = (new Query())
@@ -120,14 +137,8 @@ class CookiesController extends Controller
 
 			if ($accepted) {
 				$acceptedValue = $acceptedValue + 1;
-				if ($action != "first") {
-					$rejectedValue = $rejectedValue - 1;
-				}
 			} else {
 				$rejectedValue = $rejectedValue + 1;
-				if ($action != "first") {
-					$acceptedValue = $acceptedValue - 1;
-				}
 			}
 
 			Db::update(
