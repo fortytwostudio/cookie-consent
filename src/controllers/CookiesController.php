@@ -104,22 +104,6 @@ class CookiesController extends Controller
 	public function actionLogConsent() {
 		$this->requirePostRequest();
 
-		$table = '{{%forty_cookies_enabled}}';
-		$schema = Craft::$app->db->schema->getTableSchema($table);
-
-		if ($schema && isset($schema->columns['id'])) {
-			$idColumn = $schema->columns['id'];
-
-			// Will be true for MySQL auto_increment or Postgres identity
-			if ($idColumn->autoIncrement) {
-				Craft::info("✅ {$table}.id is auto-increment", "DowleyDev");
-			} else {
-				Craft::warning("⚠ {$table}.id is NOT auto-increment", "DowleyDev");
-			}
-		} else {
-			Craft::error("Table {$table} not found.", "DowleyDev");
-		}
-
 		$params = Craft::$app->getRequest()->getBodyParams();
 
 		$row = (new Query())
