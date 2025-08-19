@@ -1,0 +1,184 @@
+{% extends "_layouts/cp" %}
+{% import "_includes/forms" as forms %}
+
+{% set title = "Cookie Consent Content" %}
+{% set selectedSubnavItem = "content" %}
+{% set settings = fortycookie.getContent %}
+
+{% set fullPageForm = true %}
+
+{% set tabs = {
+	"tab01-popup": {
+		label: "Popup" | t("forty-cookieconsent"),
+		url: "#tab01-popup"
+	},
+	"tab02-preferences": {
+		label: "Preferences" | t("forty-cookieconsent"),
+		url: "#tab02-preferences"
+	},
+	"tab03-trigger": {
+		label: "Trigger" | t("forty-cookieconsent"),
+		url: "#tab03-trigger"
+	},
+} %}
+
+{% set selectedTab = craft.app.request.getParam("tab", "tab01-popup") %}
+{% block content %}
+	{{ actionInput("forty-cookieconsent/content/update-content") }}
+
+	<div id="fields">
+		<div id="tab01-popup" class="flex-fields" data-id="tab01-popup" role="tabpanel" aria-labelledby="tab-tab01-popup">
+			{{ forms.textField({
+				label: "Popup Title" | t("forty-cookieconsent"),
+				name: "popupTitle",
+				value: settings.popupTitle,
+			}) }}
+			{{ forms.textareaField({
+				label: "Popup Description" | t("forty-cookieconsent"),
+				name: "popupDescription",
+				value: settings.popupDescription,
+			}) }}
+			{{ forms.textareaField({
+				label: "Footer" | t("forty-cookieconsent"),
+				name: "popupFooter",
+				value: settings.popupFooter,
+			}) }}
+			<hr>
+			{{ forms.selectField({
+				label: "Layout" | t("forty-cookieconsent"),
+				name: "popupLayout",
+				value: settings.popupLayout,
+				options: {
+					"box": "Box",
+					"box wide": "Box (Wide)",
+					"box inline": "Box (Inline)",
+					"cloud": "Cloud",
+					"cloud inline": "Cloud (Inline)",
+					"bar": "Bar",
+					"bar inline": "Bar (Inline)",
+				}
+			}) }}
+			{{ forms.selectField({
+				label: "Position" | t("forty-cookieconsent"),
+				name: "popupPosition",
+				value: settings.popupPosition,
+				options: {
+					"top": "Top",
+					"bottom": "Bottom",
+					"middle": "Middle",
+					"top left": "Top Left",
+					"top center": "Top Center",
+					"top right": "Top Right",
+					"middle left": "Middle Left",
+					"middle center": "Middle Center",
+					"middle right": "Middle Right",
+					"bottom left": "Bottom Left",
+					"bottom center": "Bottom Center",
+					"bottom right": "Bottom Right",
+				}
+			}) }}
+		</div>
+		<div id="tab02-preferences" class="flex-fields hidden" data-id="tab02-preferences" role="tabpanel" aria-labelledby="tab-tab02-preferences">
+			{{ forms.textField({
+				label: "Preferences Title" | t("forty-cookieconsent"),
+				name: "preferencesTitle",
+				value: settings.preferencesTitle,
+			}) }}
+			{{ forms.textareaField({
+				label: "Preferences Description" | t("forty-cookieconsent"),
+				name: "preferencesDescription",
+				value: settings.preferencesDescription,
+				rows: 3,
+			}) }}
+			<hr>
+			{{ forms.textareaField({
+				label: "Required Cookies Description" | t("forty-cookieconsent"),
+				name: "requiredCookies",
+				value: settings.requiredCookies,
+				rows: 3,
+			}) }}
+			{{ forms.textareaField({
+				label: "Functional Cookies Description" | t("forty-cookieconsent"),
+				name: "functionalCookies",
+				value: settings.functionalCookies,
+				rows: 3,
+			}) }}
+			{{ forms.textareaField({
+				label: "Analytics Cookies Description" | t("forty-cookieconsent"),
+				name: "analyticsCookies",
+				value: settings.analyticsCookies,
+				rows: 3,
+			}) }}
+			{{ forms.textareaField({
+				label: "Performance Cookies Description" | t("forty-cookieconsent"),
+				name: "performanceCookies",
+				value: settings.performanceCookies,
+				rows: 3,
+			}) }}
+			{{ forms.textareaField({
+				label: "Advertising Cookies Description" | t("forty-cookieconsent"),
+				name: "advertisingCookies",
+				value: settings.advertisingCookies,
+				rows: 3,
+			}) }}
+			{{ forms.textareaField({
+				label: "Security Cookies Description" | t("forty-cookieconsent"),
+				name: "securityCookies",
+				value: settings.securityCookies,
+				rows: 3,
+			}) }}
+			<hr>
+			<hr>
+			{{ forms.selectField({
+				label: "Layout" | t("forty-cookieconsent"),
+				name: "preferencesLayout",
+				value: settings.preferencesLayout,
+				options: {
+					"box": "Box",
+					"bar": "Bar",
+					"bar wide": "Bar (Wide)",
+				}
+			}) }}
+			{{ forms.selectField({
+				label: "Position" | t("forty-cookieconsent"),
+				name: "preferencesPosition",
+				value: settings.preferencesPosition,
+				options: {
+					"left": "Left",
+					"right": "Right",
+				}
+			}) }}
+		</div>
+		<div id="tab03-trigger" class="flex-fields hidden" data-id="tab03-trigger" role="tabpanel" aria-labelledby="tab-tab03-trigger">
+
+			{% set element = settings.triggerIcon ? craft.assets.id(settings.triggerIcon).one() : null %}
+
+			{{ forms.elementSelectField({
+				id: 'triggerIcon',
+				name: 'triggerIcon',
+				label: 'Cookie Icon',
+				instructions: "If you'd like to use something other than the default icon in the cookie button, you can upload a custom one here. SVG only." |t("forty-cookieconsent"),
+				value: settings.triggerIcon ? [settings.triggerIcon] : null,
+				errors: null,
+				elements: settings.triggerIcon ? [element] : null,
+				elementType: 'craft\\elements\\Asset',
+				single: true,
+				viewMode: 'large',
+				criteria: {
+					kind: 'image',
+					filename: '*.svg',
+				},
+			}) }}
+
+			{{ forms.selectField({
+				label: "Position" | t("forty-cookieconsent"),
+				name: "triggerPosition",
+				value: settings.triggerPosition,
+				options: {
+					"left": "Left",
+					"right": "Right",
+				}
+			}) }}
+		</div>
+	</div>
+{% endblock %}

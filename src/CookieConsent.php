@@ -102,6 +102,10 @@ class CookieConsent extends Plugin
 					"label" => "Cookies",
 					"url" => "42cookie-consent/cookies",
 				],
+				"content" => [
+					"label" => "Content",
+					"url" => "42cookie-consent/content",
+				],
 				"guide" => [
 					"label" => "Guide",
 					"url" => "42cookie-consent/guide",
@@ -139,7 +143,6 @@ class CookieConsent extends Plugin
 					"42cookie-consent/settings" => "forty-cookieconsent/settings/general", // Controller
 					"42cookie-consent/settings/general" => "forty-cookieconsent/settings/general", // Controller
 					"42cookie-consent/settings/google" => "forty-cookieconsent/settings/google", // Controller
-					"42cookie-consent/settings/customisation" => "forty-cookieconsent/settings/customisation", // Controller
 					"42cookie-consent/settings/colours" => "forty-cookieconsent/settings/colours", // Controller
 					"42cookie-consent" => [
 						"template" => "forty-cookieconsent/dashboard", // Template
@@ -151,6 +154,9 @@ class CookieConsent extends Plugin
 					"42cookie-consent/cookies/<elementId:\d+>" => "elements/edit", // Craft
 					"42cookie-consent/guide" => [
 						"template" => "forty-cookieconsent/guide", // Template
+					],
+					"42cookie-consent/content" => [
+						"template" => "forty-cookieconsent/content", // Template
 					],
 				];
 

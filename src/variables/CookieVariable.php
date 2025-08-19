@@ -34,16 +34,16 @@ class CookieVariable extends ServiceLocator
 	{
 		return CookieConsent::$settings;
 	}
-	
+
 	public function getLogs()
 	{
 		$row = (new Query())
 			->select(['*'])
 			->from('{{%forty_cookies_tracked}}')
 			->one();
-		
+
 		$options = [];
-		
+
 		if ($row) {
 			$options = [
 				"accepted" => $row["accepted"],
@@ -51,8 +51,18 @@ class CookieVariable extends ServiceLocator
 				"total" => $row["accepted"] + $row["rejected"],
 			];
 		};
-		
+
 		return $options;
 	}
-	
+
+	public function getContent()
+	{
+		$row = (new Query())
+			->select(['*'])
+			->from('{{%forty_cookies_content}}')
+			->one();
+
+		return $row;
+	}
+
 }

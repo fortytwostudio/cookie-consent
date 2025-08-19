@@ -1,6 +1,9 @@
 {# Get Settings #}
 {% set settings = fortycookie.getSettings() %}
 
+{# Get Content #}
+{% set content = fortycookie.getContent() %}
+
 {# Get all cookies #}
 {% set requiredCookies = fortycookie.getCookiesByType("necessary") %}
 {% set functionalCookies = fortycookie.getCookiesByType("functionality") %}
@@ -10,8 +13,8 @@
 {% set securityCookies = fortycookie.getCookiesByType("security") %}
 
 {# Get cookie Icon #}
-{% set cookieIcon = settings.triggerIcon ?
-	craft.assets.id(settings.triggerIcon).eagerly().one() | default(null) %}
+{% set cookieIcon = content.triggerIcon ?
+	craft.assets.id(content.triggerIcon).eagerly().one() | default(null) %}
 
 {% if cookieIcon %}
 	{% set cookieSVG = svg(cookieIcon) | e('js') %}
@@ -26,28 +29,26 @@ window.FortyCookieConsent = {
 	},
 	enabled: "{{ settings.isEnabled }}",
 	cookieIcon: "{{ cookieSVG }}",
-	title: "{{ settings.title }}",
-	description: "{{ settings.description }}",
-	footer: "{{ settings.footer }}",
-	consentLayout: "{{ settings.consentLayout }}",
-	consentPosition: "{{ settings.consentPosition }}",
+	title: "{{ content.popupTitle }}",
+	description: "{{ content.popupDescription }}",
+	footer: "{{ content.popupFooter }}",
+	consentLayout: "{{ content.popupLayout }}",
+	consentPosition: "{{ content.popupPosition }}",
 	consentEqualWeightButtons: {{ settings.consentEqualWeightButtons ? "true" : "false" }},
 	consentFlipButtons: {{ settings.consentFlipButtons ? "true" : "false" }},
-	internalTitle: "{{ settings.internalTitle }}",
-	internalDescription: "{{ settings.internalDescription }}",
-	requiredDescription: "{{ settings.requiredDescription }}",
-	functionalDescription: "{{ settings.functionalDescription }}",
-	analyticsDescription: "{{ settings.analyticsDescription }}",
-	performanceDescription: "{{ settings.performanceDescription }}",
-	advertisementDescription: "{{ settings.advertisementDescription }}",
-	securityDescription: "{{ settings.securityDescription }}",
-	moreTitle: "{{ settings.moreTitle }}",
-	moreDescription: "{{ settings.moreDescription }}",
-	preferencesLayout: "{{ settings.preferencesLayout }}",
-	preferencesPosition: "{{ settings.preferencesPosition }}",
+	internalTitle: "{{ content.preferencesTitle }}",
+	internalDescription: "{{ content.preferencesDescription }}",
+	requiredDescription: "{{ content.requiredCookies }}",
+	functionalDescription: "{{ content.functionalCookies }}",
+	analyticsDescription: "{{ content.analyticsCookies }}",
+	performanceDescription: "{{ content.performanceCookies }}",
+	advertisementDescription: "{{ content.advertisingCookies }}",
+	securityDescription: "{{ content.securityCookies }}",
+	preferencesLayout: "{{ content.preferencesLayout }}",
+	preferencesPosition: "{{ content.preferencesPosition }}",
 	preferencesEqualWeightButtons: {{ settings.preferencesEqualWeightButtons ? "true" : "false" }},
 	preferencesFlipButtons: {{ settings.preferencesFlipButtons ? "true" : "false" }},
-	triggerPosition: "{{ settings.triggerPosition }}",
+	triggerPosition: "{{ content.triggerPosition }}",
 	sendGtag: {{ settings.sendGtag ? "true" : "false" }},
 	requiredCookies: "{{ requiredCookies | json_encode }}",
 	functionalCookies: "{{ functionalCookies | json_encode }}",
