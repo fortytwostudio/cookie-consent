@@ -64,7 +64,6 @@ class CookieConsent extends Plugin
 		$this->registerElement();
 		$this->registerFields();
 		$this->_setEvents();
-		$this->_afterInstall();
 		$this->_registerTwigExtensions();
 	}
 
@@ -260,29 +259,5 @@ class CookieConsent extends Plugin
 	private function _registerTwigExtensions()
 	{
 		Craft::$app->view->registerTwigExtension(new CookieExtension());
-	}
-
-	/**
-	 * @title: After Install
-	 * @desc: Add the default row to the forty_cookies_tracked table
-	 */
-	private function _afterInstall()
-	{
-		Event::on(
-		Plugins::class,
-		Plugins::EVENT_AFTER_INSTALL_PLUGIN,
-		function(PluginEvent $event)
-		{
-			if ($event->plugin === $this) {
-
-				// Create new Log Element
-				$element = new LogElement();
-
-				if (!Craft::$app->getElements()->saveElement($element, true)) {
-					return $this->asModelFailure($element, Craft::t('forty-cookieconsent', 'Couldn’t add Element.'), 'element');
-				}
-
-			}
-		});
 	}
 }
