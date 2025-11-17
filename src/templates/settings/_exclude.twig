@@ -1,0 +1,38 @@
+{% extends "forty-cookieconsent/_layouts/_settings" %}
+{% import "_includes/forms" as forms %}
+
+{% set title = "Cookie Consent" %}
+{% set selectedSubnavItem = "settings" %}
+
+{% set fullPageForm = true %}
+
+{% block content %}
+	{{ actionInput("plugins/save-plugin-settings") }}
+	{{ hiddenInput("pluginHandle", "forty-cookieconsent") }}
+
+	<div id="fields">
+		{% namespace "settings" %}
+			<p>Select which entries you don't want to display the cookie consent on.</p>
+
+			{# Hidden field to make sure we always pass the excludeId param back #}
+			{{ forms.hidden({
+				name: 'excludeIds',
+				value: ''
+			}) }}
+
+			{# Add Entries #}
+			{% for index, section in sections %}
+				<legend><strong>{{ section.title}}</strong></legend>
+				{% for entry in section.entries %}
+					{{ forms.checkboxField({
+						label: entry.title,
+						name: 'excludeIds[]',
+						value: entry.id | number,
+						checked: entry.id in (settings.excludeIds ?? []),
+					}) }}
+				{% endfor %}
+			{% endfor %}
+
+		{% endnamespace %}
+	</div>
+{% endblock %}

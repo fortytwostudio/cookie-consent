@@ -4,6 +4,7 @@ namespace fortytwostudio\cookieconsent;
 /* Craft */
 use Craft;
 use craft\base\Plugin;
+use craft\elements\Entry as EntryElement;
 use craft\events\RegisterComponentTypesEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\events\PluginEvent;
@@ -24,6 +25,9 @@ use fortytwostudio\cookieconsent\elements\LogElement;
 use fortytwostudio\cookieconsent\records\LogRecord;
 use fortytwostudio\cookieconsent\twigextensions\CookieExtension;
 use fortytwostudio\cookieconsent\variables\CookieVariable;
+
+// Website Documentation
+
 
 /* Yii */
 use yii\base\Application;
@@ -141,6 +145,7 @@ class CookieConsent extends Plugin
 				$routes = [
 					"42cookie-consent/settings" => "forty-cookieconsent/settings/general", // Controller
 					"42cookie-consent/settings/general" => "forty-cookieconsent/settings/general", // Controller
+					"42cookie-consent/settings/exclude" => "forty-cookieconsent/settings/exclude", // Controller
 					"42cookie-consent/settings/google" => "forty-cookieconsent/settings/google", // Controller
 					"42cookie-consent/settings/colours" => "forty-cookieconsent/settings/colours", // Controller
 					"42cookie-consent" => [
@@ -217,8 +222,17 @@ class CookieConsent extends Plugin
 			Event::on(
 				View::class,
 				View::EVENT_BEGIN_BODY,
-				function(Event $event) {
+				function(Event $event) use ($settings) {
 					$view = Craft::$app->getView();
+
+					// Check the entry
+					$element = Craft::$app->getUrlManager()->getMatchedElement();
+
+					if ($element instanceof EntryElement) {
+						if (in_array((string) $element->id, $settings->excludeIds, true)) {
+							return;
+						}
+					}
 
 					// Switch to the plugin templates
 					$view->setTemplateMode(View::TEMPLATE_MODE_CP);

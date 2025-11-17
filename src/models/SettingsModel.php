@@ -7,6 +7,9 @@ class SettingsModel extends Model {
 	public bool $isEnabled = true;
 	public bool $sendGtag = true;
 
+	// Entries
+	public array $excludeIds = [];
+
 	// Text
 	// ______________________________________
 
@@ -53,4 +56,28 @@ class SettingsModel extends Model {
 	public function isEnabled(): bool {
 		return $this->isEnabled;
 	}
+
+	public function init(): void
+    {
+        parent::init();
+
+        // Normalise excludeIds into a clean int array
+        if (is_string($this->excludeIds)) {
+            // Case: only the hidden field -> treat as empty
+            $this->excludeIds = [];
+        } elseif (is_array($this->excludeIds)) {
+            $this->excludeIds = array_values(array_unique(
+                array_filter(
+                    array_map('intval', $this->excludeIds) // "", "46" → 0, 46
+                )
+            ));
+        }
+    }
+
+	protected function defineRules(): array
+    {
+        $rules = parent::defineRules();
+        $rules[] = [['excludeIds'], 'each', 'rule' => ['integer']];
+        return $rules;
+    }
 }
