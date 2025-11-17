@@ -27,7 +27,7 @@ use fortytwostudio\cookieconsent\twigextensions\CookieExtension;
 use fortytwostudio\cookieconsent\variables\CookieVariable;
 
 // Website Documentation
-
+use fortytwostudio\websitedocumentation\WebsiteDocumentation;
 
 /* Yii */
 use yii\base\Application;
@@ -214,6 +214,7 @@ class CookieConsent extends Plugin
 	private function _setEvents() : void {
 		/** @var $settings SettingsModel */
 		$settings = $this->getSettings();
+		$self = $this;
 
 		if(
 			Craft::$app->getRequest()->getIsSiteRequest() &&
@@ -222,7 +223,7 @@ class CookieConsent extends Plugin
 			Event::on(
 				View::class,
 				View::EVENT_BEGIN_BODY,
-				function(Event $event) use ($settings) {
+				function(Event $event) use ($settings, $self) {
 					$view = Craft::$app->getView();
 
 					// Check the entry
@@ -230,6 +231,23 @@ class CookieConsent extends Plugin
 
 					if ($element instanceof EntryElement) {
 						if (in_array((string) $element->id, $settings->excludeIds, true)) {
+							return;
+						}
+					}
+
+					// Check we've got website documentation plugin installed
+					$websitedocs = Craft::$app->plugins->getPlugin('websitedocumentation');
+					$websitedocsUrl = null;
+
+					if ($websitedocs) {
+						$handle = Craft::$app->sites->currentSite->handle ?? "default";
+						$config = WebsiteDocumentation::customConfig();
+						$websitedocsUrl = WebsiteDocumentation::$plugin->getDocUrl($config, $handle);
+					}
+
+					if ($websitedocsUrl) {
+						$currentUrl = Craft::$app->getRequest()->getAbsoluteUrl();
+						if (strpos($currentUrl, $websitedocsUrl) !== false) {
 							return;
 						}
 					}
