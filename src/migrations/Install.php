@@ -37,6 +37,12 @@ class Install extends Migration
 			'accepted' => $this->integer()->notNull()->defaultValue(0),
 			'rejected' => $this->integer()->notNull()->defaultValue(0),
 		]);
+		
+		// Insert default row
+		$this->insert('{{%forty_cookies_tracked}}', [
+			'accepted' => 0,
+			'rejected' => 0,
+		]);
 
 		// Cookies
         $this->archiveTableIfExists('{{%forty_cookies_enabled}}');
