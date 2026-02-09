@@ -18,6 +18,11 @@ class CookieAssets extends AssetBundle
 			'dist/css/main.css',
 		];
 
+		$this->cssOptions = [
+            'media' => 'print',
+            'onload' => "this.media='all'",
+        ];
+
 		parent::init();
 	}
 }
