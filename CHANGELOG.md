@@ -4,11 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 3.5.0
+
+### Fixed
+
+- Updated Colours to work on hover
+
 ## 3.3.1
 
 ### Added
 
--   Added option to inset a default row on install
+- Added option to inset a default row on install
 
 ## 3.3.0
 
@@ -21,10 +27,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ### Added
 
--   Settings to exclude certain pages from having the cookie consent form
+- Settings to exclude certain pages from having the cookie consent form
 
 ## 1.0.0
 
 ### Added
 
--   Initial release
+- Initial release
