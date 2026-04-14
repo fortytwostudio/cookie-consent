@@ -14,7 +14,6 @@ class Install extends Migration
     public function safeUp(): bool
     {
         $this->createTables();
-        $this->addForeignKeys();
 
         return true;
     }
@@ -22,7 +21,6 @@ class Install extends Migration
     public function safeDown(): bool
     {
         $this->dropProjectConfig();
-        $this->dropForeignKeys();
         $this->dropTables();
 
         return true;
@@ -37,7 +35,7 @@ class Install extends Migration
 			'accepted' => $this->integer()->notNull()->defaultValue(0),
 			'rejected' => $this->integer()->notNull()->defaultValue(0),
 		]);
-		
+
 		// Insert default row
 		$this->insert('{{%forty_cookies_tracked}}', [
 			'accepted' => 0,
@@ -97,27 +95,11 @@ class Install extends Migration
 		]);
     }
 
-    public function addForeignKeys(): void
-    {
-        $this->addForeignKey(null, '{{%forty_cookies_tracked}}', ['id'], Table::ELEMENTS, ['id'], 'CASCADE', null);
-		$this->addForeignKey(null, '{{%forty_cookies_enabled}}', ['id'], Table::ELEMENTS, ['id'], 'CASCADE', null);
-    }
-
     public function dropTables(): void
     {
         $this->dropTableIfExists('{{%forty_cookies_tracked}}');
         $this->dropTableIfExists('{{%forty_cookies_enabled}}');
-    }
-
-    public function dropForeignKeys(): void
-    {
-        if ($this->db->tableExists('{{%forty_cookies_tracked}}')) {
-            MigrationHelper::dropAllForeignKeysOnTable('{{%forty_cookies_tracked}}', $this);
-        }
-
-        if ($this->db->tableExists('{{%forty_cookies_enabled}}')) {
-            MigrationHelper::dropAllForeignKeysOnTable('{{%forty_cookies_enabled}}', $this);
-        }
+		$this->dropTableIfExists('{{%forty_cookies_content}}');
     }
 
     public function dropProjectConfig(): void
