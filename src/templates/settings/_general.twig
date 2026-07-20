@@ -17,6 +17,16 @@
 				name: "isEnabled",
 				on: settings.isEnabled,
 			}) }}
+
+			{{ forms.textField({
+				label: "First-party cookie domain"|t("forty-cookieconsent"),
+				instructions: "Used when known services create cookies on this website. For example, example.com."|t("forty-cookieconsent"),
+				id: "siteDomain",
+				name: "siteDomain",
+				value: settings.siteDomain,
+				placeholder: "example.com",
+				required: true,
+			}) }}
 		{% endnamespace %}
 	</div>
 {% endblock %}

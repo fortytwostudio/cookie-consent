@@ -160,11 +160,13 @@ class CookieElement extends Element
 		// Request
 		$request = Craft::$app->getRequest();
 
-		$this->type = $request->getBodyParam("type");
-		$this->cookieId = $request->getBodyParam("cookieId");
-		$this->domain = $request->getBodyParam("domain");
-		$this->duration = $request->getBodyParam("duration");
-		$this->description = $request->getBodyParam("description");
+		// Keep programmatically supplied values (installer/presets) when this is
+		// not an edit-form request.
+		if ($request instanceof \craft\web\Request && $request->getBodyParam('cookieId', null) !== null) {
+			foreach (["type", "cookieId", "domain", "duration", "description"] as $attribute) {
+				$this->{$attribute} = $request->getBodyParam($attribute);
+			}
+		}
 
 		// Add Data to database
 		if (!$this->propagating) {
@@ -272,3 +274,4 @@ class CookieElement extends Element
 		return implode("\n", $fields);
 	}
 }
+

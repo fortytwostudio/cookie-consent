@@ -155,6 +155,7 @@ class CookieConsent extends Plugin
 						"template" => "forty-cookieconsent/dashboard", // Template
 					],
 					"42cookie-consent/cookies" => "forty-cookieconsent/cookies/index", // Controller
+					"42cookie-consent/cookies/new" => "forty-cookieconsent/cookies/new", // Controller
 					"42cookie-consent/cookies/<elementId:\d+>" => "elements/edit", // Craft
 					"42cookie-consent/guide" => [
 						"template" => "forty-cookieconsent/guide", // Template

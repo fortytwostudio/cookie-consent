@@ -1,0 +1,123 @@
+{% extends "_layouts/cp" %}
+{% import "_includes/forms" as forms %}
+
+{% set title = "New Cookie"|t("forty-cookieconsent") %}
+{% set selectedSubnavItem = "cookies" %}
+{% set fullPageForm = true %}
+
+{% block actionButton %}
+	<button type="submit" class="btn submit">{{ "Continue"|t("forty-cookieconsent") }}</button>
+{% endblock %}
+
+{% block content %}
+	{{ actionInput("forty-cookieconsent/cookies/create-service") }}
+	{{ redirectInput("42cookie-consent/cookies") }}
+
+	<div id="fields">
+		{{ forms.selectField({
+			label: "Cookie service"|t("forty-cookieconsent"),
+			instructions: "Choose the service used by the website. Its known cookies will be added automatically."|t("forty-cookieconsent"),
+			id: "service",
+			name: "service",
+			options: serviceOptions,
+			required: true,
+		}) }}
+
+		<div id="custom-cookie-fields">
+			{{ forms.selectField({
+				label: "Cookie type"|t("forty-cookieconsent"),
+				name: "type",
+				id: "type",
+				options: [
+					{label: "Necessary", value: "necessary"},
+					{label: "Functionality", value: "functionality"},
+					{label: "Analytics", value: "analytics"},
+					{label: "Performance", value: "performance"},
+					{label: "Advertisement", value: "advertisement"},
+				],
+				required: true,
+			}) }}
+
+			{{ forms.textField({
+				label: "Cookie ID"|t("forty-cookieconsent"),
+				name: "cookieId",
+				id: "cookieId",
+				required: true,
+			}) }}
+
+			{{ forms.textField({
+				label: "Domain"|t("forty-cookieconsent"),
+				name: "customDomain",
+				id: "customDomain",
+				value: siteDomain,
+				required: true,
+			}) }}
+
+			{{ forms.textField({
+				label: "Duration"|t("forty-cookieconsent"),
+				name: "duration",
+				id: "duration",
+				placeholder: "For example, 2 years or Session",
+				required: true,
+			}) }}
+
+			{{ forms.textareaField({
+				label: "Description"|t("forty-cookieconsent"),
+				name: "description",
+				id: "description",
+				rows: 5,
+				required: true,
+			}) }}
+		</div>
+
+		<div id="known-service-fields" class="hidden">
+			{{ forms.textField({
+				label: "First-party cookie domain"|t("forty-cookieconsent"),
+				instructions: "The domain on which this service sets its first-party cookies."|t("forty-cookieconsent"),
+				id: "domain",
+				name: "domain",
+				value: siteDomain,
+				required: true,
+			}) }}
+
+			<div class="field">
+				<div class="heading"><label>{{ "Cookies that will be added"|t("forty-cookieconsent") }}</label></div>
+				<div class="instructions"><p>{{ "Cookies with an ID that already exists will be skipped."|t("forty-cookieconsent") }}</p></div>
+				<ul id="service-cookie-list"></ul>
+			</div>
+		</div>
+	</div>
+
+	{% js %}
+		const services = {{ services|json_encode|raw }};
+		const serviceSelect = document.getElementById('service');
+		const knownFields = document.getElementById('known-service-fields');
+		const customFields = document.getElementById('custom-cookie-fields');
+		const domainInput = document.getElementById('domain');
+		const cookieList = document.getElementById('service-cookie-list');
+
+		function updateServiceFields() {
+			const service = services[serviceSelect.value];
+			knownFields.classList.toggle('hidden', !service);
+			customFields.classList.toggle('hidden', Boolean(service));
+			domainInput.required = Boolean(service);
+			domainInput.disabled = !service;
+			customFields.querySelectorAll('input, select, textarea').forEach(field => {
+				field.required = !service;
+				field.disabled = Boolean(service);
+			});
+			cookieList.replaceChildren();
+
+			if (service) {
+				service.cookies.forEach(cookie => {
+					const item = document.createElement('li');
+					item.textContent = `${cookie.cookieId} — ${cookie.description}`;
+					cookieList.appendChild(item);
+				});
+			}
+		}
+
+		serviceSelect.addEventListener('change', updateServiceFields);
+		updateServiceFields();
+	{% endjs %}
+{% endblock %}

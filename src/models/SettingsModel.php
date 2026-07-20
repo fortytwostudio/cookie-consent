@@ -6,6 +6,7 @@ use craft\base\Model;
 class SettingsModel extends Model {
 	public bool $isEnabled = true;
 	public bool $sendGtag = true;
+	public string $siteDomain = '';
 
 	// Entries
 	public array $excludeIds = [];
@@ -78,6 +79,7 @@ class SettingsModel extends Model {
     {
         $rules = parent::defineRules();
         $rules[] = [['excludeIds'], 'each', 'rule' => ['integer']];
+		$rules[] = [['siteDomain'], 'string', 'max' => 255];
         return $rules;
     }
 }

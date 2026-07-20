@@ -5,6 +5,7 @@ use Craft;
 use craft\db\Migration;
 use craft\db\Table;
 use craft\helpers\MigrationHelper;
+use fortytwostudio\cookieconsent\services\KnownCookies;
 
 class Install extends Migration
 {
@@ -14,6 +15,7 @@ class Install extends Migration
     public function safeUp(): bool
     {
         $this->createTables();
+		KnownCookies::seedCraftDefaults();
 
         return true;
     }

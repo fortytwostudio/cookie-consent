@@ -16,6 +16,8 @@ class CookieQuery extends ElementQuery
      */
     public string|null $type = null;
 
+    public string|null $cookieId = null;
+
     /**
      * Filters the query results based on the type.
      *
@@ -26,6 +28,12 @@ class CookieQuery extends ElementQuery
     {
         $this->type = $value;
 
+        return $this;
+    }
+
+    public function cookieId(string|null $value): self
+    {
+        $this->cookieId = $value;
         return $this;
     }
 
@@ -55,6 +63,10 @@ class CookieQuery extends ElementQuery
 
 		if ($this->type) {
 			$this->subQuery->andWhere(['forty_cookies_enabled.type' => $this->type]);
+		}
+
+		if ($this->cookieId) {
+			$this->subQuery->andWhere(['forty_cookies_enabled.cookieId' => $this->cookieId]);
 		}
 
         return parent::beforePrepare();

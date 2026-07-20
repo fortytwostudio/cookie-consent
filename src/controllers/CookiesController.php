@@ -12,15 +12,17 @@ use craft\web\Controller;
 use fortytwostudio\cookieconsent\elements\CookieElement;
 use fortytwostudio\cookieconsent\models\CookieModel;
 use fortytwostudio\cookieconsent\records\LogRecord;
+use fortytwostudio\cookieconsent\services\KnownCookies;
 
 use yii\db\Expression;
+use yii\web\Response;
 
 class CookiesController extends Controller
 {
 	// Protected Properties
 	// =========================================================================
 
-	protected array|bool|int $allowAnonymous = true;
+	protected array|bool|int $allowAnonymous = ['get-consent', 'log-consent'];
 
 	public function actionIndex()
 	{
@@ -28,8 +30,74 @@ class CookiesController extends Controller
 
 		$variables["elements"] = CookieElement::find()
 			->all();
-
 		return $this->renderTemplate("forty-cookieconsent/cookies/index", $variables);
+	}
+
+	public function actionNew(): Response
+	{
+		$options = [['label' => 'Custom cookie', 'value' => 'custom']];
+		foreach (KnownCookies::services() as $key => $service) {
+			$options[] = ['label' => $service['label'], 'value' => $key];
+		}
+
+		return $this->renderTemplate('forty-cookieconsent/cookies/new', [
+			'serviceOptions' => $options,
+			'services' => KnownCookies::services(),
+			'siteDomain' => KnownCookies::siteDomain(),
+		]);
+	}
+
+	public function actionCreateService(): Response
+	{
+		$this->requirePostRequest();
+		$serviceKey = (string)$this->request->getRequiredBodyParam('service');
+
+		if ($serviceKey === 'custom') {
+			$definition = [
+				'type' => (string)$this->request->getRequiredBodyParam('type'),
+				'cookieId' => trim((string)$this->request->getRequiredBodyParam('cookieId')),
+				'domain' => trim((string)$this->request->getRequiredBodyParam('customDomain')),
+				'duration' => trim((string)$this->request->getRequiredBodyParam('duration')),
+				'description' => trim((string)$this->request->getRequiredBodyParam('description')),
+			];
+
+			foreach ($definition as $value) {
+				if ($value === '') {
+					throw new \yii\web\BadRequestHttpException('All custom cookie fields are required.');
+				}
+			}
+
+			$result = KnownCookies::createMissing([$definition]);
+			if ($result['added'] !== []) {
+				Craft::$app->getSession()->setNotice("{$definition['cookieId']} added.");
+			} else {
+				Craft::$app->getSession()->setNotice("{$definition['cookieId']} was not added because that cookie ID already exists.");
+			}
+
+			return $this->redirect('42cookie-consent/cookies');
+		}
+
+		$service = KnownCookies::service($serviceKey);
+		if ($service === null) {
+			throw new \yii\web\BadRequestHttpException('Unknown cookie service.');
+		}
+
+		$domain = trim((string)$this->request->getRequiredBodyParam('domain'));
+		if ($domain === '') {
+			throw new \yii\web\BadRequestHttpException('A first-party cookie domain is required.');
+		}
+
+		$result = KnownCookies::createMissing($service['cookies'], $domain);
+		$added = count($result['added']);
+		$skipped = count($result['skipped']);
+
+		if ($added > 0) {
+			Craft::$app->getSession()->setNotice("{$service['label']}: {$added} cookie" . ($added === 1 ? '' : 's') . " added, {$skipped} already existed.");
+		} else {
+			Craft::$app->getSession()->setNotice("{$service['label']}: no cookies added; {$skipped} already existed.");
+		}
+
+		return $this->redirect('42cookie-consent/cookies');
 	}
 
 	/**
@@ -39,7 +107,11 @@ class CookiesController extends Controller
 	 */
 	public function actionEdit()
 	{
-		// Create & populate the draft
+		return $this->createCookieDraft();
+	}
+
+	private function createCookieDraft(): Response
+	{
 		$template = Craft::createObject(CookieElement::class);
 
 		// Save it

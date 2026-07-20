@@ -34,3 +34,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 ### Added
 
 - Initial release
+# 3.8.0 - 2026-07-20
+
+- Added Craft session, CSRF and consent cookies automatically during installation.
+- Added a client-friendly service picker when creating cookies.
+- Added a Google Analytics 4 preset for `_ga` and `_ga_*` with exact duplicate prevention.
+- Added a reusable first-party cookie domain setting.
