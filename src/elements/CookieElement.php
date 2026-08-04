@@ -142,6 +142,7 @@ class CookieElement extends Element
 		return [
 			"type" => Craft::t("app", "Type"),
 			"description" => Craft::t("app", "Description"),
+			"domain" => Craft::t("app", "Domain"),
 		];
 	}
 
