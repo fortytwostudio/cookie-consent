@@ -212,83 +212,104 @@ class CookieConsent extends Plugin
 	// Private Functions
 	// _______________________________________
 
-	private function _setEvents() : void {
-		/** @var $settings SettingsModel */
+	private function _setEvents(): void
+	{
+		/** @var SettingsModel $settings */
 		$settings = $this->getSettings();
-		$self = $this;
 
-		if(
-			Craft::$app->getRequest()->getIsSiteRequest() &&
-			$settings->isEnabled()
+		if (
+			!Craft::$app->getRequest()->getIsSiteRequest() ||
+			!$settings->isEnabled()
 		) {
-			Event::on(
-				View::class,
-				View::EVENT_BEGIN_BODY,
-				function(Event $event) use ($settings, $self) {
-					$view = Craft::$app->getView();
+			return;
+		}
 
-					// Check the entry
-					$element = Craft::$app->getUrlManager()->getMatchedElement();
-						
-					// If element doesn't exist, lets just return
-					if (!$element) {
+		Event::on(
+			View::class,
+			View::EVENT_BEGIN_BODY,
+			function(Event $event) use ($settings): void {
+				$view = Craft::$app->getView();
+
+				// Do not inject anything into CP/login/2FA templates.
+				if ($view->getTemplateMode() !== View::TEMPLATE_MODE_SITE) {
+					return;
+				}
+
+				$element = Craft::$app->getUrlManager()->getMatchedElement();
+
+				if (!$element) {
+					return;
+				}
+
+				if (
+					$element instanceof EntryElement &&
+					in_array((string)$element->id, $settings->excludeIds, true)
+				) {
+					return;
+				}
+
+				$websitedocs = Craft::$app->getPlugins()
+					->getPlugin('websitedocumentation');
+
+				if ($websitedocs) {
+					$siteHandle = Craft::$app->getSites()
+						->getCurrentSite()
+						->handle;
+
+					$config = WebsiteDocumentation::customConfig();
+
+					$websitedocsUrl = WebsiteDocumentation::$plugin
+						->getDocUrl($config, $siteHandle);
+
+					if (
+						$websitedocsUrl &&
+						str_contains(
+							Craft::$app->getRequest()->getAbsoluteUrl(),
+							$websitedocsUrl
+						)
+					) {
 						return;
 					}
+				}
 
-					if ($element instanceof EntryElement) {
-						if (in_array((string) $element->id, $settings->excludeIds, true)) {
-							return;
-						}
-					}
+				/*
+				* Temporarily use CP template mode so Craft can find the
+				* plugin's templates. Always restore the original mode.
+				*/
+				$originalTemplateMode = $view->getTemplateMode();
 
-					// Check we've got website documentation plugin installed
-					$websitedocs = Craft::$app->plugins->getPlugin('websitedocumentation');
-					$websitedocsUrl = null;
-
-					if ($websitedocs) {
-						$handle = Craft::$app->sites->currentSite->handle ?? "default";
-						$config = WebsiteDocumentation::customConfig();
-						$websitedocsUrl = WebsiteDocumentation::$plugin->getDocUrl($config, $handle);
-					}
-
-					if ($websitedocsUrl) {
-						$currentUrl = Craft::$app->getRequest()->getAbsoluteUrl();
-						if (strpos($currentUrl, $websitedocsUrl) !== false) {
-							return;
-						}
-					}
-
-					// Switch to the plugin templates
+				try {
 					$view->setTemplateMode(View::TEMPLATE_MODE_CP);
 
-					// Add Variables
-					$variables = $view->renderTemplate('forty-cookieconsent/_variables.twig');
-
-					//minify
-					$variables = preg_replace('/\s+/', ' ', $variables);
-					$variables = str_replace([' >', '< ', ' ,'], ['>', '<', ','], $variables);
-
-					$view->registerJs($variables, View::POS_HEAD);
-
-					// Load the JS file
-					$bundle = Craft::$app->getView()->registerAssetBundle(CookieAssets::class);
-
-					$jsFile = $bundle->baseUrl . '/dist/js/main.js';
-
-					$view->registerJsFile(
-						$jsFile,
-						[
-							'position' => YiiView::POS_END,
-							'defer' => true,
-							'type' => 'module',
-						]
+					$variables = $view->renderTemplate(
+						'forty-cookieconsent/_variables.twig'
 					);
-
-					// Switch back to front end
-					$view->setTemplateMode(View::TEMPLATE_MODE_SITE);
+				} finally {
+					$view->setTemplateMode($originalTemplateMode);
 				}
-			);
-		}
+
+				$variables = preg_replace('/\s+/', ' ', $variables);
+				$variables = str_replace(
+					[' >', '< ', ' ,'],
+					['>', '<', ','],
+					$variables
+				);
+
+				$view->registerJs($variables, View::POS_HEAD);
+
+				/** @var CookieAssets $bundle */
+				$bundle = $view->registerAssetBundle(CookieAssets::class);
+
+				$view->registerJsFile(
+					$bundle->baseUrl . '/dist/js/main.js',
+					[
+						'position' => YiiView::POS_END,
+						'defer' => true,
+						'type' => 'module',
+					]
+				);
+			}
+		);
 	}
 
 	/**
