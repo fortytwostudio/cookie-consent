@@ -229,6 +229,11 @@ class CookieConsent extends Plugin
 
 					// Check the entry
 					$element = Craft::$app->getUrlManager()->getMatchedElement();
+						
+					// If element doesn't exist, lets just return
+					if (!$element) {
+						return;
+					}
 
 					if ($element instanceof EntryElement) {
 						if (in_array((string) $element->id, $settings->excludeIds, true)) {
