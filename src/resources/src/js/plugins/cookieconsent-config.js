@@ -239,28 +239,29 @@ function createCookieTable(cookies) {
 }
 
 async function logConsent(action = "first") {
-	// Retrieve all the fields
-	const cookie = CookieConsent.getCookie();
-	const preferences = CookieConsent.getUserPreferences();
+    const cookie = CookieConsent.getCookie();
+    const preferences = CookieConsent.getUserPreferences();
 
-	// In this example we're saving only 4 fields
-	const userConsent = {
-		consentId: cookie.consentId,
-		consentAction: action,
-		acceptType: preferences.acceptType,
-		acceptedCategories: preferences.acceptedCategories,
-		rejectedCategories: preferences.rejectedCategories,
-		[settings.csrf.name]: settings.csrf.value,
-	};
+    const userConsent = {
+        consentId: cookie.consentId,
+        consentAction: action,
+        acceptType: preferences.acceptType,
+        acceptedCategories: preferences.acceptedCategories,
+        rejectedCategories: preferences.rejectedCategories,
+    };
 
-	// Send the data backend record
-	const response = await fetch("actions/forty-cookieconsent/cookies/log-consent", {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify(userConsent),
-	});
+    try {
+        await fetch(settings.actionUrl, {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(userConsent),
+        });
+    } catch (error) {
+        console.error("Unable to log cookie consent:", error);
+    }
 }
 
 export default config;

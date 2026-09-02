@@ -14,6 +14,7 @@ use fortytwostudio\cookieconsent\models\CookieModel;
 use fortytwostudio\cookieconsent\records\LogRecord;
 use fortytwostudio\cookieconsent\services\KnownCookies;
 
+use yii\base\Action;
 use yii\db\Expression;
 use yii\web\Response;
 
@@ -23,6 +24,15 @@ class CookiesController extends Controller
 	// =========================================================================
 
 	protected array|bool|int $allowAnonymous = ['get-consent', 'log-consent'];
+	
+	public function beforeAction($action): bool
+	{
+		if ($action->id === 'log-consent') {
+			$this->enableCsrfValidation = false;
+		}
+	
+		return parent::beforeAction($action);
+	}
 
 	public function actionIndex()
 	{

@@ -23,10 +23,11 @@
 {% endif %}
 
 window.FortyCookieConsent = {
-	csrf: {
-		name: '{{ craft.app.config.general.csrfTokenName|e('js') }}',
-		value: '{{ craft.app.request.csrfToken|e('js') }}',
-	},
+	actionUrl: '{{ actionUrl('forty-cookieconsent/cookies/log-consent')|e('js') }}',
+    csrf: {
+        name: '{{ craft.app.config.general.csrfTokenName|e('js') }}',
+        value: '{{ craft.app.request.csrfToken|e('js') }}',
+    },
 	enabled: "{{ settings.isEnabled }}",
 	cookieIcon: "{{ cookieSVG }}",
 	title: "{{ content.popupTitle }}",
