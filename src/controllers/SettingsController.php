@@ -1,107 +1,124 @@
 <?php
-
 namespace fortytwostudio\cookieconsent\controllers;
 
 use Craft;
-use craft\web\Controller;
 use craft\elements\Entry;
-use craft\models\Section;
-
+use craft\helpers\UrlHelper;
+use craft\helpers\ProjectConfig as ProjectConfigHelper;
+use craft\web\Controller;
 use fortytwostudio\cookieconsent\CookieConsent;
-
+use fortytwostudio\cookieconsent\models\SettingsModel;
+use fortytwostudio\cookieconsent\services\SiteContext;
+use yii\web\BadRequestHttpException;
 use yii\web\Response;
 
-class SettingsController extends Controller {
+class SettingsController extends Controller
+{
+    public function beforeAction($action): bool
+    {
+        if (!parent::beforeAction($action)) {
+            return false;
+        }
+        $this->requireCpRequest();
+        $this->requireAdmin();
+        return true;
+    }
 
-	public function actionGeneral() : Response {
-		$settings = CookieConsent::getInstance()->getSettings();
+    public function actionGeneral(): Response { return $this->renderSection('general'); }
+    public function actionExclude(): Response { return $this->renderSection('exclude'); }
+    public function actionGoogle(): Response { return $this->renderSection('google'); }
+    public function actionColours(): Response { return $this->renderSection('colours'); }
 
-		return $this->renderTemplate("forty-cookieconsent/settings/_general", [
-			"settings" => $settings,
-		]);
-	}
+    public function actionSave(): Response
+    {
+        $this->requirePostRequest();
+        $site = SiteContext::forCpRequest();
+        $section = $this->request->getRequiredBodyParam('section');
+        $fields = $this->sectionFields($section);
+        $submitted = $this->request->getBodyParam('settings', []);
+        if (!is_array($submitted)) {
+            throw new BadRequestHttpException('Invalid cookie consent settings.');
+        }
+        $data = array_intersect_key($submitted, array_flip($fields));
+        foreach ($data as $attribute => &$value) {
+            if ($attribute === 'excludeIds') {
+                $value = SettingsModel::normalizeExcludeIds($value);
+            } elseif (in_array($attribute, ['isEnabled', 'sendGtag'], true)) {
+                $value = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+                if ($value === null) {
+                    throw new BadRequestHttpException('Invalid switch value.');
+                }
+            } elseif (!is_string($value)) {
+                throw new BadRequestHttpException('Invalid setting value.');
+            } else {
+                $value = trim($value);
+                if ($section === 'colours') {
+                    $value = ltrim($value, '#');
+                }
+            }
+        }
+        unset($value);
 
-	public function actionExclude() : Response {
-		$settings = CookieConsent::getInstance()->getSettings();
+        $plugin = CookieConsent::getInstance();
+        $effective = $plugin->getSiteSettings($site->id);
+        $effective->setAttributes($data, false);
+        if (!$effective->validate()) {
+            Craft::$app->getSession()->setError(implode(' ', $effective->getErrorSummary(true)));
+            return $this->renderSection($section, $effective);
+        }
 
-		// Get all sections
-		$sections = Craft::$app->entries->getAllSections();
-		$sectionHandlesById = [];
+        // Read the stored values so saving one site/tab does not persist environment
+        // overrides or replace another site's settings with the current form values.
+        $stored = ProjectConfigHelper::unpackAssociativeArrays(
+            Craft::$app->getProjectConfig()->get('plugins.forty-cookieconsent.settings') ?? [],
+        );
+        $stored = array_replace((new SettingsModel())->getAttributes(), $stored);
+        $stored['sites'][$site->uid] = array_replace($stored['sites'][$site->uid] ?? [], $data);
+        if (!Craft::$app->getPlugins()->savePluginSettings($plugin, $stored)) {
+            Craft::$app->getSession()->setError('Could not save cookie consent settings.');
+            return $this->renderSection($section, $effective);
+        }
 
-		foreach ($sections as $section) {
-			$sectionHandlesById[$section->id] = [
-				"title" => $section->name,
-				"handle" => $section->handle
-			];
-		}
+        Craft::$app->getSession()->setNotice('Cookie consent settings saved for ' . $site->name . '.');
+        return $this->redirect(UrlHelper::cpUrl('42cookie-consent/settings/' . $section, ['site' => $site->handle]));
+    }
 
-		// Get all the entries
-		$rows = Entry::find()
-			->site('*')
-			->uri(':notempty:')
-			->select([
-				'id'    => 'elements.id',
-				'title' => 'elements_sites.title',
-				'uri'	=> 'elements_sites.uri',
-				'sectionId' => 'entries.sectionId',
-			])
-			->asArray()
-			->all();
+    private function renderSection(string $section, ?SettingsModel $settings = null): Response
+    {
+        $this->sectionFields($section);
+        $site = SiteContext::forCpRequest();
+        $variables = [
+            'cookieSite' => $site,
+            'settings' => $settings ?? CookieConsent::getInstance()->getSiteSettings($site->id),
+        ];
 
-		$entriesBySection = [];
+        if ($section === 'exclude') {
+            $sections = [];
+            foreach (Craft::$app->getEntries()->getAllSections() as $entrySection) {
+                $sections[$entrySection->id] = ['title' => $entrySection->name, 'entries' => []];
+            }
+            foreach (Entry::find()->siteId($site->id)->uri(':notempty:')->all() as $entry) {
+                if (isset($sections[$entry->sectionId])) {
+                    $sections[$entry->sectionId]['entries'][] = ['id' => $entry->id, 'title' => $entry->title];
+                }
+            }
+            $variables['sections'] = array_filter($sections, static fn(array $section): bool => $section['entries'] !== []);
+        }
 
-		foreach ($rows as $row) {
-			$handle = $sectionHandlesById[$row['sectionId']]["handle"] ?? null;
+        return $this->renderTemplate('forty-cookieconsent/settings/_' . $section, $variables);
+    }
 
-			if (!$handle) {
-				continue;
-			}
-
-			$title = $sectionHandlesById[$row['sectionId']]["title"] ?? null;
-			$entriesBySection[$handle]["title"] = $title;
-
-			$entriesBySection[$handle]["entries"][] = [
-				'id'    => $row['id'],
-				'title' => $row['title'],
-			];
-		}
-
-		return $this->renderTemplate("forty-cookieconsent/settings/_exclude", [
-			"settings" => $settings,
-			"sections" => $entriesBySection,
-		]);
-	}
-
-
-	public function actionGoogle() : Response {
-		$settings = CookieConsent::getInstance()->getSettings();
-
-		return $this->renderTemplate("forty-cookieconsent/settings/_google", [
-			"settings" => $settings,
-		]);
-	}
-
-	public function actionCustomisation() : Response {
-		$settings = CookieConsent::getInstance()->getSettings();
-
-		$icon = null;
-
-		if (!empty($settings->triggerIcon)) {
-			$iconId = $settings->triggerIcon;
-			$icon = Craft::$app->elements->getElementById($iconId);
-		}
-
-		return $this->renderTemplate("forty-cookieconsent/settings/_customisation", [
-			"settings" => $settings,
-			"icon" => $icon,
-		]);
-	}
-
-	public function actionColours() : Response {
-		$settings = CookieConsent::getInstance()->getSettings();
-
-		return $this->renderTemplate("forty-cookieconsent/settings/_colours", [
-			"settings" => $settings,
-		]);
-	}
+    private function sectionFields(mixed $section): array
+    {
+        return match ($section) {
+            'general' => ['isEnabled', 'siteDomain'],
+            'exclude' => ['excludeIds'],
+            'google' => ['sendGtag'],
+            'colours' => array_values(array_diff(SettingsModel::siteAttributes(), [
+                'isEnabled', 'sendGtag', 'siteDomain', 'excludeIds', 'triggerPosition',
+                'consentEqualWeightButtons', 'consentFlipButtons', 'preferencesEqualWeightButtons', 'preferencesFlipButtons',
+            ])),
+            default => throw new BadRequestHttpException('Unknown cookie consent settings section.'),
+        };
+    }
 }

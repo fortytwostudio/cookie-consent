@@ -48,6 +48,10 @@ class TypeField extends BaseNativeField
 				'value' => 'advertisement',
 				'label' => 'Advertisement',
 			],
+			[
+				'value' => 'security',
+				'label' => 'Security',
+			],
 		];
 
 		return Craft::$app->getView()->renderTemplate('_includes/forms/select.twig', [

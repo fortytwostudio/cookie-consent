@@ -25,6 +25,11 @@ use fortytwostudio\cookieconsent\elements\LogElement;
 use fortytwostudio\cookieconsent\records\LogRecord;
 use fortytwostudio\cookieconsent\twigextensions\CookieExtension;
 use fortytwostudio\cookieconsent\variables\CookieVariable;
+use fortytwostudio\cookieconsent\services\SiteContext;
+use fortytwostudio\cookieconsent\services\SiteData;
+use fortytwostudio\cookieconsent\services\KnownCookies;
+use craft\events\SiteEvent;
+use craft\services\Sites;
 
 // Website Documentation
 use fortytwostudio\websitedocumentation\WebsiteDocumentation;
@@ -48,6 +53,7 @@ use Psr\Log\LogLevel;
  */
 class CookieConsent extends Plugin
 {
+	public string $schemaVersion = '3.13.2';
 	public static string $plugin;
 	public ?string $name = "Cookie Consent";
 	public static ?CookieVariable $cookieVariable;
@@ -69,6 +75,7 @@ class CookieConsent extends Plugin
 		$this->registerFields();
 		$this->_setEvents();
 		$this->_registerTwigExtensions();
+		$this->_registerSiteEvents();
 	}
 
 	// Public Functions
@@ -79,6 +86,19 @@ class CookieConsent extends Plugin
 	 */
 	public function getSettingsResponse(): mixed {
 		return Craft::$app->controller->redirect(UrlHelper::cpUrl("42cookie-consent/settings/general"));
+	}
+
+	public function getSiteSettings(?int $siteId = null): SettingsModel
+	{
+		$site = SiteContext::resolve($siteId);
+		/** @var SettingsModel $defaults */
+		$defaults = $this->getSettings();
+		// The original flat settings belong to the primary site. Other sites
+		// start from plugin defaults, then apply only their explicit UID overrides.
+		return $defaults->forSite(
+			$site->uid,
+			$site->id === Craft::$app->getSites()->getPrimarySite()->id,
+		);
 	}
 
 	// Rename the Control Panel Item & Add Sub Menu
@@ -130,6 +150,16 @@ class CookieConsent extends Plugin
 			];
 		}
 
+		$request = Craft::$app->getRequest();
+		if ($request->getIsCpRequest() && $request->getSegment(1) === '42cookie-consent') {
+			$site = SiteContext::forCpRequest();
+			$item['url'] = UrlHelper::cpUrl('42cookie-consent', ['site' => $site->handle]);
+			foreach ($item['subnav'] as &$subnav) {
+				$subnav['url'] = UrlHelper::cpUrl($subnav['url'], ['site' => $site->handle]);
+			}
+			unset($subnav);
+		}
+
 		return $item;
 	}
 
@@ -148,21 +178,15 @@ class CookieConsent extends Plugin
 					"42cookie-consent/settings/exclude" => "forty-cookieconsent/settings/exclude", // Controller
 					"42cookie-consent/settings/google" => "forty-cookieconsent/settings/google", // Controller
 					"42cookie-consent/settings/colours" => "forty-cookieconsent/settings/colours", // Controller
-					"42cookie-consent" => [
-						"template" => "forty-cookieconsent/dashboard", // Template
-					],
-					"42cookie-consent/dashboard" => [
-						"template" => "forty-cookieconsent/dashboard", // Template
-					],
+					"42cookie-consent" => "forty-cookieconsent/dashboard/index",
+					"42cookie-consent/dashboard" => "forty-cookieconsent/dashboard/index",
 					"42cookie-consent/cookies" => "forty-cookieconsent/cookies/index", // Controller
 					"42cookie-consent/cookies/new" => "forty-cookieconsent/cookies/new", // Controller
 					"42cookie-consent/cookies/<elementId:\d+>" => "elements/edit", // Craft
 					"42cookie-consent/guide" => [
 						"template" => "forty-cookieconsent/guide", // Template
 					],
-					"42cookie-consent/content" => [
-						"template" => "forty-cookieconsent/content", // Template
-					],
+					"42cookie-consent/content" => "forty-cookieconsent/content/index",
 				];
 
 				$event->rules = array_merge($event->rules, $routes);
@@ -214,20 +238,14 @@ class CookieConsent extends Plugin
 
 	private function _setEvents(): void
 	{
-		/** @var SettingsModel $settings */
-		$settings = $this->getSettings();
-
-		if (
-			!Craft::$app->getRequest()->getIsSiteRequest() ||
-			!$settings->isEnabled()
-		) {
+		if (!Craft::$app->getRequest()->getIsSiteRequest()) {
 			return;
 		}
 
 		Event::on(
 			View::class,
 			View::EVENT_BEGIN_BODY,
-			function(Event $event) use ($settings): void {
+			function(Event $event): void {
 				$view = Craft::$app->getView();
 
 				// Do not inject anything into CP/login/2FA templates.
@@ -235,15 +253,17 @@ class CookieConsent extends Plugin
 					return;
 				}
 
-				$element = Craft::$app->getUrlManager()->getMatchedElement();
-
-				if (!$element) {
+				// Resolve settings after Craft has determined the frontend site.
+				$settings = $this->getSiteSettings();
+				if (!$settings->isEnabled()) {
 					return;
 				}
 
+				$element = Craft::$app->getUrlManager()->getMatchedElement();
+
 				if (
 					$element instanceof EntryElement &&
-					in_array((string)$element->id, $settings->excludeIds, true)
+					in_array((int)$element->id, $settings->excludeIds, true)
 				) {
 					return;
 				}
@@ -288,13 +308,6 @@ class CookieConsent extends Plugin
 					$view->setTemplateMode($originalTemplateMode);
 				}
 
-				$variables = preg_replace('/\s+/', ' ', $variables);
-				$variables = str_replace(
-					[' >', '< ', ' ,'],
-					['>', '<', ','],
-					$variables
-				);
-
 				$view->registerJs($variables, View::POS_HEAD);
 
 				/** @var CookieAssets $bundle */
@@ -310,6 +323,23 @@ class CookieConsent extends Plugin
 				);
 			}
 		);
+	}
+
+	private function _registerSiteEvents(): void
+	{
+		Event::on(Sites::class, Sites::EVENT_AFTER_SAVE_SITE, static function(SiteEvent $event): void {
+			if (!$event->isNew) {
+				return;
+			}
+			// Project config can create sites before plugin installation/migrations.
+			$schema = Craft::$app->getDb()->getTableSchema(SiteData::CONTENT_TABLE, true);
+			$cookieSchema = Craft::$app->getDb()->getTableSchema('{{%forty_cookies_enabled}}', true);
+			if (!$schema?->getColumn('siteId') || !$cookieSchema?->getColumn('cookieSiteId')) {
+				return;
+			}
+			SiteData::initializeSite($event->site->id);
+			KnownCookies::seedCraftDefaults($event->site->id);
+		});
 	}
 
 	/**

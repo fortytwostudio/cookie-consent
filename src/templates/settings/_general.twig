@@ -7,8 +7,9 @@
 {% set fullPageForm = true %}
 
 {% block content %}
-	{{ actionInput("plugins/save-plugin-settings") }}
-	{{ hiddenInput("pluginHandle", "forty-cookieconsent") }}
+	{{ actionInput("forty-cookieconsent/settings/save") }}
+	{{ hiddenInput("site", cookieSite.handle) }}
+	{{ hiddenInput("section", "general") }}
 
 	<div id="fields">
 		{% namespace "settings" %}
@@ -20,12 +21,11 @@
 
 			{{ forms.textField({
 				label: "First-party cookie domain"|t("forty-cookieconsent"),
-				instructions: "Used when known services create cookies on this website. For example, example.com."|t("forty-cookieconsent"),
+				instructions: "Used for this site’s cookie declarations. Leave blank to use this site’s base URL hostname."|t("forty-cookieconsent"),
 				id: "siteDomain",
 				name: "siteDomain",
 				value: settings.siteDomain,
 				placeholder: "example.com",
-				required: true,
 			}) }}
 		{% endnamespace %}
 	</div>

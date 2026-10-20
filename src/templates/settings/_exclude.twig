@@ -7,8 +7,9 @@
 {% set fullPageForm = true %}
 
 {% block content %}
-	{{ actionInput("plugins/save-plugin-settings") }}
-	{{ hiddenInput("pluginHandle", "forty-cookieconsent") }}
+	{{ actionInput("forty-cookieconsent/settings/save") }}
+	{{ hiddenInput("site", cookieSite.handle) }}
+	{{ hiddenInput("section", "exclude") }}
 
 	<div id="fields">
 		{% namespace "settings" %}
@@ -27,7 +28,7 @@
 					{{ forms.checkboxField({
 						label: entry.title,
 						name: 'excludeIds[]',
-						value: entry.id | number,
+						value: entry.id,
 						checked: entry.id in (settings.excludeIds ?? []),
 					}) }}
 				{% endfor %}

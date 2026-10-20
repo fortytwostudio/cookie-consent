@@ -2,57 +2,62 @@
 namespace fortytwostudio\cookieconsent\controllers;
 
 use Craft;
-use craft\base\Element;
-use craft\db\Query;
-use craft\elements\db\ElementQuery;
-use craft\helpers\Db;
+use craft\elements\Asset;
 use craft\helpers\UrlHelper;
 use craft\web\Controller;
-
-use yii\db\Expression;
+use fortytwostudio\cookieconsent\services\SiteContext;
+use fortytwostudio\cookieconsent\services\SiteData;
+use yii\web\BadRequestHttpException;
+use yii\web\Response;
 
 class ContentController extends Controller
 {
-	// Public Properties
-	// =========================================================================
+    public function beforeAction($action): bool
+    {
+        if (!parent::beforeAction($action)) {
+            return false;
+        }
+        $this->requireCpRequest();
+        $this->requirePermission('accessPlugin-forty-cookieconsent');
+        return true;
+    }
 
-	/**
-	 * Update Content
-	 *
-	 * @return Json The result
-	 */
-	public function actionUpdateContent() {
-		$this->requirePostRequest();
+    public function actionIndex(): Response
+    {
+        $site = SiteContext::forCpRequest();
+        return $this->renderTemplate('forty-cookieconsent/content/index', [
+            'cookieSite' => $site,
+            'settings' => SiteData::getContent($site->id),
+        ]);
+    }
 
-		$params = Craft::$app->getRequest()->getBodyParams();
-		$tableName = '{{%forty_cookies_content}}';
+    public function actionUpdateContent(): Response
+    {
+        $this->requirePostRequest();
+        $site = SiteContext::forCpRequest();
+        $data = array_intersect_key($this->request->getBodyParams(), SiteData::defaults());
+        foreach ($data as $attribute => &$value) {
+            if ($attribute === 'triggerIcon') {
+                $value = is_array($value) ? reset($value) : $value;
+                if ($value === '' || $value === null || $value === false) {
+                    $value = null;
+                } elseif (filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) !== false) {
+                    $value = (int)$value;
+                    $asset = Asset::find()->id($value)->siteId($site->id)->one();
+                    if (!$asset || strtolower($asset->getExtension()) !== 'svg') {
+                        throw new BadRequestHttpException('The cookie icon must be an SVG asset.');
+                    }
+                } else {
+                    throw new BadRequestHttpException('Invalid cookie icon.');
+                }
+            } elseif (!is_string($value)) {
+                throw new BadRequestHttpException('Invalid cookie content.');
+            }
+        }
+        unset($value);
 
-		$row = (new Query())
-			->select(['*'])
-			->from($tableName)
-			->one();
-
-		// Get the table schema (all column names)
-		$columns = Craft::$app->db->getTableSchema($tableName)->getColumnNames();
-
-		// Whitelist only the valid keys from $params
-		$data = array_intersect_key($params, array_flip($columns));
-
-		if ($row) {
-			$id = $row['id'];
-
-			Db::update(
-				$tableName,
-				$data,
-				['id' => $id]
-			);
-		}
-
-		// Do your logic here (set cookie, update DB, etc.)
-		Craft::$app->getSession()->setFlash('notice', 'Cookies accepted!');
-
-		// Redirect back to the referring page (refresh)
-		return $this->redirect(Craft::$app->getRequest()->getReferrer() ?? '/');
-	}
-
+        SiteData::saveContent($site->id, $data);
+        Craft::$app->getSession()->setNotice('Cookie consent content saved for ' . $site->name . '.');
+        return $this->redirect(UrlHelper::cpUrl('42cookie-consent/content', ['site' => $site->handle]));
+    }
 }

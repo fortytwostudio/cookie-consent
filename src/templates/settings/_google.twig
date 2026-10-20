@@ -7,8 +7,9 @@
 {% set fullPageForm = true %}
 
 {% block content %}
-	{{ actionInput("plugins/save-plugin-settings") }}
-	{{ hiddenInput("pluginHandle", "forty-cookieconsent") }}
+	{{ actionInput("forty-cookieconsent/settings/save") }}
+	{{ hiddenInput("site", cookieSite.handle) }}
+	{{ hiddenInput("section", "google") }}
 
 	<div>
 		{% namespace "settings" %}

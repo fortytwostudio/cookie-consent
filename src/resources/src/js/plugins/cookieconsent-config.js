@@ -1,15 +1,17 @@
 import * as CookieConsent from "vanilla-cookieconsent";
 
 // Settings
-const settings = window.FortyCookieConsent;
+const settings = window.FortyCookieConsent || {};
+const labels = settings.labels || {};
+const language = settings.language || "en";
 
 // Cookies
-const requiredCookies = JSON.parse(settings.requiredCookies.replace(/&quot;/gi, '"'));
-const functionalCookies = JSON.parse(settings.functionalCookies.replace(/&quot;/gi, '"'));
-const analyticsCookies = JSON.parse(settings.analyticsCookies.replace(/&quot;/gi, '"'));
-const performanceCookies = JSON.parse(settings.performanceCookies.replace(/&quot;/gi, '"'));
-const advertisementCookies = JSON.parse(settings.advertisementCookies.replace(/&quot;/gi, '"'));
-const securityCookies = JSON.parse(settings.securityCookies.replace(/&quot;/gi, '"'));
+const requiredCookies = settings.requiredCookies || [];
+const functionalCookies = settings.functionalCookies || [];
+const analyticsCookies = settings.analyticsCookies || [];
+const performanceCookies = settings.performanceCookies || [];
+const advertisementCookies = settings.advertisementCookies || [];
+const securityCookies = settings.securityCookies || [];
 
 const CAT_NECESSARY = "necessary";
 const CAT_ANALYTICS = "analytics";
@@ -27,18 +29,20 @@ const SERVICE_SECURITY_STORAGE = 'security_storage'
 
 // Define dataLayer and the gtag function.
 window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
+function gtag(){window.dataLayer.push(arguments);}
 
 // Set default consent to 'denied' (this should happen before changing any other dataLayer)
-gtag('consent', 'default', {
-	[SERVICE_AD_STORAGE]: 'denied',
-	[SERVICE_AD_USER_DATA]: 'denied',
-	[SERVICE_AD_PERSONALIZATION]: 'denied',
-	[SERVICE_ANALYTICS_STORAGE]: 'denied',
-	[SERVICE_FUNCTIONALITY_STORAGE]: 'denied',
-	[SERVICE_PERSONALIZATION_STORAGE]: 'denied',
-	[SERVICE_SECURITY_STORAGE]: 'denied',
-});
+if (settings.enabled && settings.sendGtag) {
+	gtag('consent', 'default', {
+		[SERVICE_AD_STORAGE]: 'denied',
+		[SERVICE_AD_USER_DATA]: 'denied',
+		[SERVICE_AD_PERSONALIZATION]: 'denied',
+		[SERVICE_ANALYTICS_STORAGE]: 'denied',
+		[SERVICE_FUNCTIONALITY_STORAGE]: 'denied',
+		[SERVICE_PERSONALIZATION_STORAGE]: 'denied',
+		[SERVICE_SECURITY_STORAGE]: 'denied',
+	});
+}
 
 function updateGtagConsent() {
 	if (settings.sendGtag) {
@@ -55,14 +59,22 @@ function updateGtagConsent() {
 }
 
 const config = {
+	cookie: {
+		name: settings.cookieName || "cc_cookie",
+		path: settings.cookiePath || "/",
+	},
 	guiOptions: {
 		consentModal: {
 			layout: settings.consentLayout,
 			position: settings.consentPosition,
+			equalWeightButtons: settings.consentEqualWeightButtons,
+			flipButtons: settings.consentFlipButtons,
 		},
 		preferencesModal: {
 			layout: settings.preferencesLayout,
 			position: settings.preferencesPosition,
+			equalWeightButtons: settings.preferencesEqualWeightButtons,
+			flipButtons: settings.preferencesFlipButtons,
 		},
 	},
 	onFirstConsent: ({ cookie }) => {
@@ -100,30 +112,30 @@ const config = {
 			},
 			services: settings.sendGtag ? {
 				[SERVICE_ANALYTICS_STORAGE]: {
-					label: 'Enables storage (such as cookies) related to analytics e.g. visit duration.',
+					label: labels.analyticsStorage,
 				}
 			} : null
 		},
 		[CAT_ADVERTISEMENT]: {
 			services: settings.sendGtag ? {
 				[SERVICE_AD_STORAGE]: {
-					label: 'Enables storage (such as cookies) related to advertising.',
+					label: labels.adStorage,
 				},
 				[SERVICE_AD_USER_DATA]: {
-					label: 'Sets consent for sending user data related to advertising to Google.',
+					label: labels.adUserData,
 				},
 				[SERVICE_AD_PERSONALIZATION]: {
-					label: 'Sets consent for personalized advertising.',
+					label: labels.adPersonalization,
 				},
 			} : null
 		},
 		[CAT_FUNCTIONALITY]: {
 			services: settings.sendGtag ? {
 				[SERVICE_FUNCTIONALITY_STORAGE]: {
-					label: 'Enables storage that supports the functionality of the website or app e.g. language settings.',
+					label: labels.functionalityStorage,
 				},
 				[SERVICE_PERSONALIZATION_STORAGE]: {
-					label: 'Enables storage related to personalization e.g. video recommendations.',
+					label: labels.personalizationStorage,
 				},
 			} : null
 		},
@@ -131,66 +143,66 @@ const config = {
 		[CAT_SECURITY]: {
 			services: settings.sendGtag ? {
 				[SERVICE_SECURITY_STORAGE]: {
-					label: 'Enables storage related to security such as authentication functionality, fraud prevention, and other user protection.',
+					label: labels.securityStorage,
 				},
 			} : null
 		}
 	},
 	language: {
-		default: "en",
+		default: language,
 
 		translations: {
-			en: {
+			[language]: {
 				consentModal: {
 					title: settings.title,
 					description: settings.description,
-					acceptAllBtn: "Accept all",
-					acceptNecessaryBtn: "Reject all",
-					showPreferencesBtn: "Manage preferences",
-					closeIconLabel: "Reject all and close",
-					footer: convertHTMLEntity(settings.footer),
+					acceptAllBtn: labels.acceptAll,
+					acceptNecessaryBtn: labels.rejectAll,
+					showPreferencesBtn: labels.managePreferences,
+					closeIconLabel: labels.rejectAllAndClose,
+					footer: settings.footer,
 				},
 				preferencesModal: {
 					title: settings.internalTitle,
-					acceptAllBtn: "Accept all",
-					acceptNecessaryBtn: "Reject all",
-					savePreferencesBtn: "Save preferences",
+					acceptAllBtn: labels.acceptAll,
+					acceptNecessaryBtn: labels.rejectAll,
+					savePreferencesBtn: labels.savePreferences,
 					sections: [
 						{
 							description: settings.internalDescription,
 						},
 						{
-							title: "Necessary cookies",
+							title: labels.necessary,
 							description: settings.requiredDescription,
 							linkedCategory: CAT_NECESSARY,
 							cookieTable: createCookieTable(requiredCookies),
 						},
 						{
-							title: "Functional cookies",
+							title: labels.functionality,
 							description: settings.functionalDescription,
 							linkedCategory: CAT_FUNCTIONALITY,
 							cookieTable: createCookieTable(functionalCookies),
 						},
 						{
-							title: "Analytics",
+							title: labels.analytics,
 							description: settings.analyticsDescription,
 							linkedCategory: CAT_ANALYTICS,
 							cookieTable: createCookieTable(analyticsCookies),
 						},
 						{
-							title: "Performance cookies",
+							title: labels.performance,
 							description: settings.performanceDescription,
 							linkedCategory: "performance",
 							cookieTable: createCookieTable(performanceCookies),
 						},
 						{
-							title: "Advertisement cookies",
+							title: labels.advertisement,
 							description: settings.advertisementDescription,
 							linkedCategory: CAT_ADVERTISEMENT,
 							cookieTable: createCookieTable(advertisementCookies),
 						},
 						{
-							title: "Security cookies",
+							title: labels.security,
 							description: settings.securityDescription,
 							linkedCategory: CAT_SECURITY,
 							cookieTable: createCookieTable(securityCookies),
@@ -202,25 +214,16 @@ const config = {
 	},
 };
 
-function convertHTMLEntity(text) {
-	const span = document.createElement("span");
-
-	return text.replace(/&[#A-Za-z0-9]+;/gi, (entity, position, text) => {
-		span.innerHTML = entity;
-		return span.innerText;
-	});
-}
-
 function createCookieTable(cookies) {
-	if (cookies.length == 0) {
-		return [];
+	if (cookies.length === 0) {
+		return undefined;
 	}
 
 	const table = {
 		headers: {
-			name: "Cookie",
-			domain: "Domain",
-			desc: "Description",
+			name: labels.cookie,
+			domain: labels.domain,
+			desc: labels.description,
 		},
 		body: [],
 	};
@@ -243,6 +246,7 @@ async function logConsent(action = "first") {
     const preferences = CookieConsent.getUserPreferences();
 
     const userConsent = {
+        siteId: settings.siteId,
         consentId: cookie.consentId,
         consentAction: action,
         acceptType: preferences.acceptType,
@@ -251,7 +255,7 @@ async function logConsent(action = "first") {
     };
 
     try {
-        await fetch(settings.actionUrl, {
+        const response = await fetch(settings.actionUrl, {
             method: "POST",
             credentials: "same-origin",
             headers: {
@@ -259,6 +263,9 @@ async function logConsent(action = "first") {
             },
             body: JSON.stringify(userConsent),
         });
+        if (!response.ok) {
+            throw new Error(`Consent request failed (${response.status}).`);
+        }
     } catch (error) {
         console.error("Unable to log cookie consent:", error);
     }

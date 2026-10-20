@@ -8,6 +8,9 @@ class SettingsModel extends Model {
 	public bool $sendGtag = true;
 	public string $siteDomain = '';
 
+	/** Site overrides keyed by stable Craft site UID, not environment-specific IDs. */
+	public array $sites = [];
+
 	// Entries
 	public array $excludeIds = [];
 
@@ -58,21 +61,38 @@ class SettingsModel extends Model {
 		return $this->isEnabled;
 	}
 
+	public function forSite(string $siteUid, bool $inheritLegacySettings = true): self
+	{
+		$settings = $inheritLegacySettings ? clone $this : new self();
+		$overrides = $this->sites[$siteUid] ?? [];
+		$allowed = array_flip(self::siteAttributes());
+		$overrides = is_array($overrides) ? array_intersect_key($overrides, $allowed) : [];
+		if (array_key_exists('excludeIds', $overrides)) {
+			$overrides['excludeIds'] = self::normalizeExcludeIds($overrides['excludeIds']);
+		}
+		$settings->setAttributes($overrides, false);
+		$settings->sites = [];
+		$settings->excludeIds = self::normalizeExcludeIds($settings->excludeIds);
+		return $settings;
+	}
+
+	public static function siteAttributes(): array
+	{
+		return array_values(array_diff((new self())->attributes(), ['sites']));
+	}
+
+	public static function normalizeExcludeIds(mixed $ids): array
+	{
+		return is_array($ids) ? array_values(array_unique(array_filter(
+			array_map('intval', $ids), static fn(int $id): bool => $id > 0,
+		))) : [];
+	}
+
 	public function init(): void
     {
         parent::init();
 
-        // Normalise excludeIds into a clean int array
-        if (is_string($this->excludeIds)) {
-            // Case: only the hidden field -> treat as empty
-            $this->excludeIds = [];
-        } elseif (is_array($this->excludeIds)) {
-            $this->excludeIds = array_values(array_unique(
-                array_filter(
-                    array_map('intval', $this->excludeIds) // "", "46" → 0, 46
-                )
-            ));
-        }
+		$this->excludeIds = self::normalizeExcludeIds($this->excludeIds);
     }
 
 	protected function defineRules(): array
@@ -80,6 +100,13 @@ class SettingsModel extends Model {
         $rules = parent::defineRules();
         $rules[] = [['excludeIds'], 'each', 'rule' => ['integer']];
 		$rules[] = [['siteDomain'], 'string', 'max' => 255];
+		$rules[] = [['isEnabled', 'sendGtag', 'consentEqualWeightButtons', 'consentFlipButtons', 'preferencesEqualWeightButtons', 'preferencesFlipButtons'], 'boolean'];
+		$colourFields = array_diff(self::siteAttributes(), [
+			'isEnabled', 'sendGtag', 'siteDomain', 'excludeIds', 'triggerPosition',
+			'consentEqualWeightButtons', 'consentFlipButtons', 'preferencesEqualWeightButtons', 'preferencesFlipButtons',
+		]);
+		$rules[] = [$colourFields, 'match', 'pattern' => '/^[0-9a-fA-F]{6}$/'];
+		$rules[] = [['sites'], 'safe'];
         return $rules;
     }
 }

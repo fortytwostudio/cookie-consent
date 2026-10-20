@@ -4,6 +4,12 @@
 {% set title = "New Cookie"|t("forty-cookieconsent") %}
 {% set selectedSubnavItem = "cookies" %}
 {% set fullPageForm = true %}
+{% set crumbs = [
+	{
+		label: cookieSite.name ~ ' — ' ~ 'Cookies'|t('forty-cookieconsent'),
+		url: cpUrl('42cookie-consent/cookies', {site: cookieSite.handle}),
+	},
+] %}
 
 {% block actionButton %}
 	<button type="submit" class="btn submit">{{ "Continue"|t("forty-cookieconsent") }}</button>
@@ -11,12 +17,13 @@
 
 {% block content %}
 	{{ actionInput("forty-cookieconsent/cookies/create-service") }}
-	{{ redirectInput("42cookie-consent/cookies") }}
+	{{ hiddenInput('siteId', cookieSite.id) }}
+	{{ redirectInput(cpUrl('42cookie-consent/cookies', {site: cookieSite.handle})) }}
 
 	<div id="fields">
 		{{ forms.selectField({
 			label: "Cookie service"|t("forty-cookieconsent"),
-			instructions: "Choose the service used by the website. Its known cookies will be added automatically."|t("forty-cookieconsent"),
+			instructions: "Choose a service used by {site}. Its known cookies will be added to this site."|t("forty-cookieconsent", {site: cookieSite.name}),
 			id: "service",
 			name: "service",
 			options: serviceOptions,
@@ -34,6 +41,7 @@
 					{label: "Analytics", value: "analytics"},
 					{label: "Performance", value: "performance"},
 					{label: "Advertisement", value: "advertisement"},
+					{label: "Security", value: "security"},
 				],
 				required: true,
 			}) }}
@@ -82,7 +90,7 @@
 
 			<div class="field">
 				<div class="heading"><label>{{ "Cookies that will be added"|t("forty-cookieconsent") }}</label></div>
-				<div class="instructions"><p>{{ "Cookies with an ID that already exists will be skipped."|t("forty-cookieconsent") }}</p></div>
+				<div class="instructions"><p>{{ "Cookies with an ID that already exists for this site will be skipped."|t("forty-cookieconsent") }}</p></div>
 				<ul id="service-cookie-list"></ul>
 			</div>
 		</div>

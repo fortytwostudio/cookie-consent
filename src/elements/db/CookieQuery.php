@@ -3,7 +3,7 @@
 namespace fortytwostudio\cookieconsent\elements\db;
 
 use Craft;
-use craft\elements\Entry;
+use fortytwostudio\cookieconsent\elements\CookieElement;
 use craft\db\Query;
 use craft\elements\db\ElementQuery;
 use craft\db\Table;
@@ -42,7 +42,7 @@ class CookieQuery extends ElementQuery
      */
     protected function fieldLayouts(): array
     {
-        $layouts = Craft::$app->getFields()->getLayoutsByType(Entry::class);
+        $layouts = Craft::$app->getFields()->getLayoutsByType(CookieElement::class);
         return $layouts;
     }
 
@@ -54,12 +54,16 @@ class CookieQuery extends ElementQuery
         $this->joinElementTable("forty_cookies_enabled");
 
         $this->query->select([
+            "forty_cookies_enabled.cookieSiteId",
             "forty_cookies_enabled.type",
             "forty_cookies_enabled.cookieId",
             "forty_cookies_enabled.domain",
             "forty_cookies_enabled.duration",
 			"forty_cookies_enabled.description",
         ]);
+
+        // Only the owning site's localized element row is valid for a cookie.
+        $this->subQuery->andWhere('[[forty_cookies_enabled.cookieSiteId]] = [[elements_sites.siteId]]');
 
 		if ($this->type) {
 			$this->subQuery->andWhere(['forty_cookies_enabled.type' => $this->type]);

@@ -1,68 +1,72 @@
 <?php
 namespace fortytwostudio\cookieconsent\variables;
 
+use Craft;
+use craft\models\Site;
 use fortytwostudio\cookieconsent\CookieConsent;
 use fortytwostudio\cookieconsent\elements\CookieElement;
-use fortytwostudio\cookieconsent\elements\db\CookieQuery;
-use craft\db\Query;
-
-use Craft;
-use craft\helpers\UrlHelper;
+use fortytwostudio\cookieconsent\models\SettingsModel;
+use fortytwostudio\cookieconsent\services\FrontendConfig;
+use fortytwostudio\cookieconsent\services\SiteContext;
+use fortytwostudio\cookieconsent\services\SiteData;
 use yii\di\ServiceLocator;
 
 class CookieVariable extends ServiceLocator
 {
-	public function getAllCookies(): array
-	{
-		$query = CookieElement::find()
-			->all();
+    public function getAllCookies(?int $siteId = null): array
+    {
+        return CookieElement::find()->siteId($this->siteId($siteId))->all();
+    }
 
-		return $query;
+    public function getCookiesByType(string $type, ?int $siteId = null): array
+    {
+        return CookieElement::find()->siteId($this->siteId($siteId))->type($type)->all();
+    }
 
-	}
+    public function getSettings(?int $siteId = null): SettingsModel
+    {
+        return CookieConsent::getInstance()->getSiteSettings($this->siteId($siteId));
+    }
 
-	public function getCookiesByType(string $type): array
-	{
-		$query = CookieElement::find()
-			->type($type)
-			->all();
+    public function getContent(?int $siteId = null): array
+    {
+        return SiteData::getContent($this->siteId($siteId));
+    }
 
-		return $query;
-	}
+    public function getLogs(?int $siteId = null): array
+    {
+        return SiteData::getLogs($this->siteId($siteId));
+    }
 
-	public function getSettings()
-	{
-		return CookieConsent::$settings;
-	}
+    public function getLegacyLogs(): array
+    {
+        $user = Craft::$app->getUser()->getIdentity();
+        return $user && $user->admin ? SiteData::getLegacyLogs() : ['accepted' => 0, 'rejected' => 0, 'total' => 0];
+    }
 
-	public function getLogs()
-	{
-		$row = (new Query())
-			->select(['*'])
-			->from('{{%forty_cookies_tracked}}')
-			->one();
+    public function getCpSite(): Site
+    {
+        return SiteContext::forCpRequest();
+    }
 
-		$options = [];
+    public function getCpSites(): array
+    {
+        return SiteContext::editableSites();
+    }
 
-		if ($row) {
-			$options = [
-				"accepted" => $row["accepted"],
-				"rejected" => $row["rejected"],
-				"total" => $row["accepted"] + $row["rejected"],
-			];
-		};
+    public function getFrontendConfig(): array
+    {
+        return FrontendConfig::build();
+    }
 
-		return $options;
-	}
-
-	public function getContent()
-	{
-		$row = (new Query())
-			->select(['*'])
-			->from('{{%forty_cookies_content}}')
-			->one();
-
-		return $row;
-	}
-
+    private function siteId(?int $siteId): int
+    {
+        if ($siteId !== null) {
+            return SiteContext::resolve($siteId)->id;
+        }
+        $request = Craft::$app->getRequest();
+        return $request->getIsConsoleRequest() || !$request->getIsCpRequest()
+            ? SiteContext::resolve()->id
+            : SiteContext::forCpRequest()->id;
+    }
 }

@@ -4,18 +4,16 @@ import CookieConsentVue from "./plugins/cookieconsentvue.js";
 
 const settings = window.FortyCookieConsent;
 
-if (settings.enabled) {
-	const cookieDiv = await createCookieDiv();
-
+if (settings?.enabled) {
+	createCookieDiv();
 	createCookieApp();
 }
 
-async function createCookieDiv() {
+function createCookieDiv() {
 	const cookieDiv = document.createElement("div");
 	cookieDiv.setAttribute("id", "fortycookieconsent");
 	document.body.appendChild(cookieDiv);
 
-	return true;
 }
 
 function createCookieApp() {
@@ -27,4 +25,8 @@ function createCookieApp() {
 	};
 
 	createApp(App, props).use(CookieConsentVue).mount("#fortycookieconsent");
+	const trigger = document.querySelector("#forty-cookie-modal-button");
+	if (trigger && settings.labels?.showPreferences) {
+		trigger.setAttribute("aria-label", settings.labels.showPreferences);
+	}
 }

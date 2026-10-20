@@ -147,69 +147,83 @@ final class KnownCookies
         return self::services()[$key] ?? null;
     }
 
-    public static function craftDefaults(): array
+    public static function craftDefaults(?int $siteId = null): array
     {
+        $site = SiteContext::resolve($siteId);
         $general = Craft::$app->getConfig()->getGeneral();
-        $domain = self::siteDomain();
+        $domain = self::siteDomain($site->id);
+        $consentCookieName = SiteContext::cookieName($site->id);
 
         return [
             self::cookie('necessary', $general->phpSessionName ?? 'CraftSessionId', $domain, 'Session', 'Maintains a secure session for visitors and users of this website.'),
             self::cookie('necessary', $general->csrfTokenName ?? 'CRAFT_CSRF_TOKEN', $domain, 'Session', 'Protects forms and requests against Cross-Site Request Forgery attacks.'),
+            self::cookie('necessary', $consentCookieName, $domain, '182 days', 'Stores your cookie consent preferences for this site.'),
         ];
     }
 
-    public static function siteDomain(): string
+    public static function siteDomain(?int $siteId = null): string
     {
-        $configured = trim(CookieConsent::getInstance()->getSettings()->siteDomain ?? '');
+        $site = SiteContext::resolve($siteId);
+        $configured = trim((string)App::parseEnv(CookieConsent::getInstance()->getSiteSettings($site->id)->siteDomain));
         if ($configured !== '') {
             return $configured;
         }
 
-        $site = Craft::$app->getSites()->getPrimarySite();
         $baseUrl = App::parseEnv($site->getBaseUrl());
         $host = is_string($baseUrl) ? parse_url($baseUrl, PHP_URL_HOST) : null;
 
         return is_string($host) && $host !== '' ? $host : 'First party';
     }
 
-    public static function seedCraftDefaults(): void
+    public static function seedCraftDefaults(?int $siteId = null): void
     {
-        self::createMissing(self::craftDefaults());
+        self::createMissing(self::craftDefaults($siteId), null, $siteId);
     }
 
     /**
      * @return array{added: string[], skipped: string[]}
      */
-    public static function createMissing(array $definitions, ?string $firstPartyDomain = null): array
+    public static function createMissing(array $definitions, ?string $firstPartyDomain = null, ?int $siteId = null): array
     {
+        $site = SiteContext::resolve($siteId);
         $existingIds = array_map(
             static fn(CookieElement $cookie): ?string => $cookie->cookieId,
-            CookieElement::find()->status(null)->all(),
+            CookieElement::find()->siteId($site->id)->status(null)->all(),
         );
         $result = ['added' => [], 'skipped' => []];
+        $transaction = Craft::$app->getDb()->beginTransaction();
 
-        foreach ($definitions as $definition) {
-            $cookieId = $definition['cookieId'];
+        try {
+            foreach ($definitions as $definition) {
+                $cookieId = $definition['cookieId'];
 
-            // Cookie names are case-sensitive, so duplicate checking is too.
-            if (in_array($cookieId, $existingIds, true)) {
-                $result['skipped'][] = $cookieId;
-                continue;
+                // Cookie names are case-sensitive, so duplicate checking is too.
+                if (in_array($cookieId, $existingIds, true)) {
+                    $result['skipped'][] = $cookieId;
+                    continue;
+                }
+
+                if ($definition['domain'] === null) {
+                    $definition['domain'] = $firstPartyDomain ?: self::siteDomain($site->id);
+                }
+
+                $cookie = new CookieElement();
+                $cookie->siteId = $site->id;
+                $cookie->cookieSiteId = $site->id;
+                self::populate($cookie, $definition);
+
+                if (Craft::$app->getElements()->saveElement($cookie)) {
+                    $result['added'][] = $cookieId;
+                    $existingIds[] = $cookieId;
+                } else {
+                    throw new \RuntimeException("Could not create the {$cookieId} cookie: " . implode(', ', $cookie->getErrorSummary(true)));
+                }
             }
 
-            if ($definition['domain'] === null) {
-                $definition['domain'] = $firstPartyDomain ?: self::siteDomain();
-            }
-
-            $cookie = new CookieElement();
-            self::populate($cookie, $definition);
-
-            if (Craft::$app->getElements()->saveElement($cookie)) {
-                $result['added'][] = $cookieId;
-                $existingIds[] = $cookieId;
-            } else {
-                Craft::warning("Could not create the {$cookieId} cookie: " . implode(', ', $cookie->getErrorSummary(true)), __METHOD__);
-            }
+            $transaction->commit();
+        } catch (\Throwable $exception) {
+            $transaction->rollBack();
+            throw $exception;
         }
 
         return $result;

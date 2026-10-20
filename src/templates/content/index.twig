@@ -3,7 +3,8 @@
 
 {% set title = "Cookie Consent Content" %}
 {% set selectedSubnavItem = "content" %}
-{% set settings = fortycookie.getContent %}
+{% set cookieSite = cookieSite ?? fortycookie.getCpSite() %}
+{% set settings = settings ?? fortycookie.getContent(cookieSite.id) %}
 
 {% set fullPageForm = true %}
 
@@ -23,8 +24,13 @@
 } %}
 
 {% set selectedTab = craft.app.request.getParam("tab", "tab01-popup") %}
+{% block toolbar %}
+	{% include 'forty-cookieconsent/_includes/site-switcher' with {siteSwitcherPath: '42cookie-consent/content'} %}
+{% endblock %}
+
 {% block content %}
 	{{ actionInput("forty-cookieconsent/content/update-content") }}
+	{{ hiddenInput("site", cookieSite.handle) }}
 
 	<div id="fields">
 		<div id="tab01-popup" class="flex-fields" data-id="tab01-popup" role="tabpanel" aria-labelledby="tab-tab01-popup">
@@ -151,7 +157,7 @@
 		</div>
 		<div id="tab03-trigger" class="flex-fields hidden" data-id="tab03-trigger" role="tabpanel" aria-labelledby="tab-tab03-trigger">
 
-			{% set element = settings.triggerIcon ? craft.assets.id(settings.triggerIcon).one() : null %}
+			{% set element = settings.triggerIcon ? craft.assets.id(settings.triggerIcon).siteId(cookieSite.id).one() : null %}
 
 			{{ forms.elementSelectField({
 				id: 'triggerIcon',
@@ -160,11 +166,12 @@
 				instructions: "If you'd like to use something other than the default icon in the cookie button, you can upload a custom one here. SVG only." |t("forty-cookieconsent"),
 				value: settings.triggerIcon ? [settings.triggerIcon] : null,
 				errors: null,
-				elements: settings.triggerIcon ? [element] : null,
+				elements: element ? [element] : [],
 				elementType: 'craft\\elements\\Asset',
 				single: true,
 				viewMode: 'large',
 				criteria: {
+					siteId: cookieSite.id,
 					kind: 'image',
 					filename: '*.svg',
 				},

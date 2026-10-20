@@ -3,225 +3,184 @@ namespace fortytwostudio\cookieconsent\controllers;
 
 use Craft;
 use craft\base\Element;
-use craft\db\Query;
-use craft\elements\db\ElementQuery;
-use craft\helpers\Db;
 use craft\helpers\UrlHelper;
 use craft\web\Controller;
-
 use fortytwostudio\cookieconsent\elements\CookieElement;
-use fortytwostudio\cookieconsent\models\CookieModel;
-use fortytwostudio\cookieconsent\records\LogRecord;
 use fortytwostudio\cookieconsent\services\KnownCookies;
-
-use yii\base\Action;
-use yii\db\Expression;
+use fortytwostudio\cookieconsent\services\SiteContext;
+use fortytwostudio\cookieconsent\services\SiteData;
+use yii\web\BadRequestHttpException;
 use yii\web\Response;
 
 class CookiesController extends Controller
 {
-	// Protected Properties
-	// =========================================================================
+    protected array|bool|int $allowAnonymous = ['get-consent', 'log-consent'];
 
-	protected array|bool|int $allowAnonymous = ['get-consent', 'log-consent'];
-	
-	public function beforeAction($action): bool
-	{
-		if ($action->id === 'log-consent') {
-			$this->enableCsrfValidation = false;
-		}
-	
-		return parent::beforeAction($action);
-	}
+    public function beforeAction($action): bool
+    {
+        if ($action->id === 'log-consent') {
+            $this->enableCsrfValidation = false;
+        }
 
-	public function actionIndex()
-	{
-		$variables = [];
+        return parent::beforeAction($action);
+    }
 
-		$variables["elements"] = CookieElement::find()
-			->all();
-		return $this->renderTemplate("forty-cookieconsent/cookies/index", $variables);
-	}
+    public function actionIndex(): Response
+    {
+        $site = SiteContext::forCpRequest();
 
-	public function actionNew(): Response
-	{
-		$options = [['label' => 'Custom cookie', 'value' => 'custom']];
-		foreach (KnownCookies::services() as $key => $service) {
-			$options[] = ['label' => $service['label'], 'value' => $key];
-		}
+        // Craft's native index and breadcrumbs identify the site by handle.
+        // Normalize old numeric URLs before the CP assets/menu are rendered.
+        if ($this->request->getIsGet()) {
+            $params = $this->request->getQueryParamsWithoutPath();
+            if (array_key_exists('siteId', $params) || ($params['site'] ?? null) !== $site->handle) {
+                unset($params['siteId']);
+                $params['site'] = $site->handle;
+                return $this->redirect(UrlHelper::cpUrl('42cookie-consent/cookies', $params));
+            }
+        }
 
-		return $this->renderTemplate('forty-cookieconsent/cookies/new', [
-			'serviceOptions' => $options,
-			'services' => KnownCookies::services(),
-			'siteDomain' => KnownCookies::siteDomain(),
-		]);
-	}
+        return $this->renderTemplate('forty-cookieconsent/cookies/index', [
+            'cookieSite' => $site,
+            'selectedSite' => $site,
+        ]);
+    }
 
-	public function actionCreateService(): Response
-	{
-		$this->requirePostRequest();
-		$serviceKey = (string)$this->request->getRequiredBodyParam('service');
+    public function actionNew(): Response
+    {
+        $site = SiteContext::forCpRequest();
+        $options = [['label' => 'Custom cookie', 'value' => 'custom']];
+        foreach (KnownCookies::services() as $key => $service) {
+            $options[] = ['label' => $service['label'], 'value' => $key];
+        }
 
-		if ($serviceKey === 'custom') {
-			$definition = [
-				'type' => (string)$this->request->getRequiredBodyParam('type'),
-				'cookieId' => trim((string)$this->request->getRequiredBodyParam('cookieId')),
-				'domain' => trim((string)$this->request->getRequiredBodyParam('customDomain')),
-				'duration' => trim((string)$this->request->getRequiredBodyParam('duration')),
-				'description' => trim((string)$this->request->getRequiredBodyParam('description')),
-			];
+        return $this->renderTemplate('forty-cookieconsent/cookies/new', [
+            'cookieSite' => $site,
+            'serviceOptions' => $options,
+            'services' => KnownCookies::services(),
+            'siteDomain' => KnownCookies::siteDomain($site->id),
+        ]);
+    }
 
-			foreach ($definition as $value) {
-				if ($value === '') {
-					throw new \yii\web\BadRequestHttpException('All custom cookie fields are required.');
-				}
-			}
+    public function actionCreateService(): Response
+    {
+        $this->requirePostRequest();
+        $site = SiteContext::forCpRequest();
+        $serviceKey = $this->requiredString('service');
+        $redirect = UrlHelper::cpUrl('42cookie-consent/cookies', ['site' => $site->handle]);
 
-			$result = KnownCookies::createMissing([$definition]);
-			if ($result['added'] !== []) {
-				Craft::$app->getSession()->setNotice("{$definition['cookieId']} added.");
-			} else {
-				Craft::$app->getSession()->setNotice("{$definition['cookieId']} was not added because that cookie ID already exists.");
-			}
+        if ($serviceKey === 'custom') {
+            $definition = [
+                'type' => $this->requiredString('type'),
+                'cookieId' => $this->requiredString('cookieId'),
+                'domain' => $this->requiredString('customDomain'),
+                'duration' => $this->requiredString('duration'),
+                'description' => $this->requiredString('description'),
+            ];
 
-			return $this->redirect('42cookie-consent/cookies');
-		}
+            if (!in_array($definition['type'], ['necessary', 'functionality', 'analytics', 'performance', 'advertisement', 'security'], true)) {
+                throw new BadRequestHttpException('Unknown cookie type.');
+            }
 
-		$service = KnownCookies::service($serviceKey);
-		if ($service === null) {
-			throw new \yii\web\BadRequestHttpException('Unknown cookie service.');
-		}
+            $result = KnownCookies::createMissing([$definition], null, $site->id);
+            if ($result['added'] !== []) {
+                Craft::$app->getSession()->setNotice("{$definition['cookieId']} added to {$site->name}.");
+            } else {
+                Craft::$app->getSession()->setNotice("{$definition['cookieId']} already exists for {$site->name}.");
+            }
 
-		$domain = trim((string)$this->request->getRequiredBodyParam('domain'));
-		if ($domain === '') {
-			throw new \yii\web\BadRequestHttpException('A first-party cookie domain is required.');
-		}
+            return $this->redirect($redirect);
+        }
 
-		$result = KnownCookies::createMissing($service['cookies'], $domain);
-		$added = count($result['added']);
-		$skipped = count($result['skipped']);
+        $service = KnownCookies::service($serviceKey);
+        if ($service === null) {
+            throw new BadRequestHttpException('Unknown cookie service.');
+        }
 
-		if ($added > 0) {
-			Craft::$app->getSession()->setNotice("{$service['label']}: {$added} cookie" . ($added === 1 ? '' : 's') . " added, {$skipped} already existed.");
-		} else {
-			Craft::$app->getSession()->setNotice("{$service['label']}: no cookies added; {$skipped} already existed.");
-		}
+        $domain = $this->requiredString('domain');
+        $result = KnownCookies::createMissing($service['cookies'], $domain, $site->id);
+        $added = count($result['added']);
+        $skipped = count($result['skipped']);
 
-		return $this->redirect('42cookie-consent/cookies');
-	}
+        Craft::$app->getSession()->setNotice(
+            "{$service['label']} for {$site->name}: {$added} cookie" . ($added === 1 ? '' : 's') .
+            " added, {$skipped} already existed for this site."
+        );
 
-	/**
-	 * Create Template.
-	 *
-	 * @return Response The rendering result
-	 */
-	public function actionEdit()
-	{
-		return $this->createCookieDraft();
-	}
+        return $this->redirect($redirect);
+    }
 
-	private function createCookieDraft(): Response
-	{
-		$template = Craft::createObject(CookieElement::class);
+    /** Retain the existing draft-creation action for integrations that use it. */
+    public function actionEdit(): Response
+    {
+        $this->requirePostRequest();
+        $site = SiteContext::forCpRequest();
+        $cookie = new CookieElement();
+        $cookie->siteId = $site->id;
+        $cookie->cookieSiteId = $site->id;
+        $cookie->setScenario(Element::SCENARIO_ESSENTIALS);
 
-		// Save it
-		$template->setScenario(Element::SCENARIO_ESSENTIALS);
-		$success = Craft::$app->getDrafts()->saveElementAsDraft($template, Craft::$app->getUser()->getId(), null, null, false);
+        $success = Craft::$app->getDrafts()->saveElementAsDraft(
+            $cookie,
+            Craft::$app->getUser()->getId(),
+            null,
+            null,
+            false,
+        );
 
-		if (!$success) {
-			return $this->asModelFailure($template, Craft::t('app', 'Couldn’t create {type}.', [
-				'type' => CookieElement::lowerDisplayName(),
-			]), 'app');
-		}
+        if (!$success) {
+            return $this->asModelFailure($cookie, Craft::t('app', 'Couldn’t create {type}.', [
+                'type' => CookieElement::lowerDisplayName(),
+            ]), 'app');
+        }
 
-		$editUrl = $template->getCpEditUrl();
+        $editUrl = $cookie->getCpEditUrl();
+        $response = $this->asModelSuccess($cookie, Craft::t('forty-cookieconsent', '{type} created.', [
+            'type' => CookieElement::displayName(),
+        ]), 'cookieconsent', ['cpEditUrl' => $editUrl]);
 
-		$response = $this->asModelSuccess($template, Craft::t('forty-cookieconsent', '{type} created.', [
-			'type' => CookieElement::displayName(),
-		]), 'cookieconsent', array_filter([
-			'cpEditUrl' => $this->request->isCpRequest ? $editUrl : null,
-		]));
+        if (!$this->request->getAcceptsJson()) {
+            $response->redirect(UrlHelper::urlWithParams($editUrl, ['fresh' => 1]));
+        }
 
-		if (!$this->request->getAcceptsJson()) {
-			$response->redirect(UrlHelper::urlWithParams($editUrl, [
-				'fresh' => 1,
-			]));
-		}
+        return $response;
+    }
 
-		return $response;
-	}
+    public function actionGetConsent(): Response
+    {
+        $site = $this->request->getIsCpRequest()
+            ? SiteContext::forCpRequest()
+            : SiteContext::forConsentRequest();
+        $logs = SiteData::getLogs($site->id);
 
-	/**
-	 * Log consent amount
-	 *
-	 * @return Json The result
-	 */
-	public function actionGetConsent() {
-		$row = (new Query())
-			->select(['*'])
-			->from('{{%forty_cookies_tracked}}')
-			->one();
+        return $this->asJson([
+            'success' => true,
+            'data' => [$logs['accepted'], $logs['rejected']],
+        ]);
+    }
 
-		$options = [];
+    public function actionLogConsent(): Response
+    {
+        $this->requirePostRequest();
+        $site = SiteContext::forConsentRequest();
+        $acceptType = $this->requiredString('acceptType');
 
-		if ($row) {
-			$options = [
-				$row["accepted"],
-				$row["rejected"],
-			];
-		};
+        if (!in_array($acceptType, ['all', 'necessary', 'custom'], true)) {
+            throw new BadRequestHttpException('Unknown consent type.');
+        }
 
-		return $this->asJson([
-			'success' => true,
-			'data' => $options,
-		]);
+        SiteData::logConsent($site->id, $acceptType === 'all');
 
-	}
+        return $this->asJson(['success' => true]);
+    }
 
-	/**
-	 * Log consent amount
-	 *
-	 * @return Json The result
-	 */
-	public function actionLogConsent() {
-		$this->requirePostRequest();
+    private function requiredString(string $name): string
+    {
+        $value = $this->request->getRequiredBodyParam($name);
+        if (!is_string($value) || trim($value) === '') {
+            throw new BadRequestHttpException("A valid {$name} value is required.");
+        }
 
-		$params = Craft::$app->getRequest()->getBodyParams();
-
-		$row = (new Query())
-			->select(['*'])
-			->from('{{%forty_cookies_tracked}}')
-			->one();
-
-		if ($row) {
-			$id = $row['id'];
-			$accepted = $params["acceptType"] == "all";
-			$action = $params["consentAction"];
-
-			$acceptedValue = (int) $row['accepted'];
-			$rejectedValue = (int) $row['rejected'];
-
-			if ($accepted) {
-				$acceptedValue = $acceptedValue + 1;
-			} else {
-				$rejectedValue = $rejectedValue + 1;
-			}
-
-			Db::update(
-				'{{%forty_cookies_tracked}}',
-				[
-					'accepted' => $acceptedValue,
-					'rejected' => $rejectedValue,
-				],
-				['id' => $id]
-			);
-		}
-
-		return $this->asJson([
-			'success' => true,
-			'data' => $params,
-			'row' => $row,
-		]);
-	}
-
+        return trim($value);
+    }
 }

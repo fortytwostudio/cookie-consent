@@ -1,0 +1,19 @@
+{% if fortycookie.getCpSites()|length > 1 %}
+    <div class="flex">
+        <label for="cookie-consent-site">{{ 'Site'|t('app') }}</label>
+        <div class="select">
+            <select id="cookie-consent-site" data-cookie-site-picker>
+                {% for site in fortycookie.getCpSites() %}
+                    <option value="{{ cpUrl(siteSwitcherPath, {site: site.handle}) }}" {{ site.id == cookieSite.id ? 'selected' }}>{{ site.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    {% js %}
+        document.querySelector('[data-cookie-site-picker]')?.addEventListener('change', function () {
+            window.location.assign(this.value);
+        });
+    {% endjs %}
+{% else %}
+    <span class="light">{{ cookieSite.name }}</span>
+{% endif %}

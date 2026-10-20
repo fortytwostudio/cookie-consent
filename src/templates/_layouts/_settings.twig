@@ -7,6 +7,7 @@
 ] %}
 
 {% set selectedSubnavItem = "settings" %}
+{% set cookieSite = cookieSite ?? fortycookie.getCpSite() %}
 
 {% set navItems = {
 	"settings-heading": {
@@ -28,6 +29,10 @@
 
 {% set activeTab = craft.app.request.getSegment(3) ?? "general" %}
 
+{% block toolbar %}
+	{% include 'forty-cookieconsent/_includes/site-switcher' with {siteSwitcherPath: '42cookie-consent/settings/' ~ activeTab} %}
+{% endblock %}
+
 {% block sidebar %}
 	<nav>
 		<ul>
@@ -38,7 +43,7 @@
 					</li>
 				{% else %}
 					<li>
-						<a href="{{ url("42cookie-consent/settings/"~ key) }}" {{ activeTab == key ? "class='sel'" }}>
+						<a href="{{ cpUrl("42cookie-consent/settings/"~ key, {site: cookieSite.handle}) }}" {{ activeTab == key ? "class='sel'" }}>
 							{{ element.title }}
 						</a>
 					</li>
