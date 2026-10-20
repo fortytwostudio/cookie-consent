@@ -57,7 +57,7 @@ final class SiteData
         $data = array_intersect_key($data, self::defaults());
         Craft::$app->getDb()->createCommand()->upsert(
             self::CONTENT_TABLE,
-            ['siteId' => $siteId] + array_replace(self::defaults($siteId), $data),
+            self::insertValues(self::CONTENT_TABLE, ['siteId' => $siteId] + array_replace(self::defaults($siteId), $data)),
             $data,
         )->execute();
     }
@@ -89,7 +89,7 @@ final class SiteData
         $siteId = SiteContext::resolve($siteId)->id;
         Craft::$app->getDb()->createCommand()->upsert(
             self::CONTENT_TABLE,
-            ['siteId' => $siteId] + self::defaults($siteId),
+            self::insertValues(self::CONTENT_TABLE, ['siteId' => $siteId] + self::defaults($siteId)),
             false,
         )->execute();
         self::ensureLogRow($siteId);
@@ -109,13 +109,28 @@ final class SiteData
         )->execute();
     }
 
-    private static function ensureLogRow(int $siteId): void
+    public static function ensureLogRow(int $siteId): void
     {
         Craft::$app->getDb()->createCommand()->upsert(
             self::TRACKED_TABLE,
-            ['siteId' => $siteId, 'accepted' => 0, 'rejected' => 0],
+            self::insertValues(self::TRACKED_TABLE, ['siteId' => $siteId, 'accepted' => 0, 'rejected' => 0]),
             false,
         )->execute();
+    }
+
+    /** Legacy installs may have an integer id column without AUTO_INCREMENT. */
+    private static function insertValues(string $table, array $values): array
+    {
+        $db = Craft::$app->getDb();
+        $schema = $db->getTableSchema($table, true);
+        $id = $schema?->getColumn('id');
+
+        if ($id !== null && !$id->autoIncrement && !array_key_exists('id', $values)) {
+            $max = (new Query())->from($table)->max('id');
+            $values = ['id' => ((int)$max) + 1] + $values;
+        }
+
+        return $values;
     }
 
     private static function totals(array $row): array

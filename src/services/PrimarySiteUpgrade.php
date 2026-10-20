@@ -102,9 +102,7 @@ final class PrimarySiteUpgrade
             return;
         }
 
-        $db->createCommand()->upsert(SiteData::TRACKED_TABLE, [
-            'siteId' => $primarySiteId, 'accepted' => 0, 'rejected' => 0,
-        ], false)->execute();
+        SiteData::ensureLogRow($primarySiteId);
 
         foreach ($rows as $row) {
             // Claim each old row once. A retry sees no consumed source; a failed

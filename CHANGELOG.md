@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 3.13.3 - 2026-10-20
+
+- Fixed multisite upgrades on legacy installs where `forty_cookies_tracked.id` or `forty_cookies_content.id` is not AUTO_INCREMENT.
+- New site rows now receive an explicit next ID only when the legacy table schema requires it; normal AUTO_INCREMENT installs are unchanged.
+- Schema version remains `3.13.2`; no additional migration is required beyond retrying `craft up`.
+
 ## 3.13.2 - 2026-10-20
 
 ### Changed
