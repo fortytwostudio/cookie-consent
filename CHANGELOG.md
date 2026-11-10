@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 3.14.0 - 2026-11-10
+
+- Added TikTok Ads to Known Cookies
+
 ## 3.13.3 - 2026-10-20
 
 - Fixed multisite upgrades on legacy installs where `forty_cookies_tracked.id` or `forty_cookies_content.id` is not AUTO_INCREMENT.
@@ -103,6 +107,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 ### Added
 
 - Initial release
+
 # 3.8.0 - 2026-07-20
 
 - Added Craft session, CSRF and consent cookies automatically during installation.

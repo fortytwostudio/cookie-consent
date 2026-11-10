@@ -139,6 +139,16 @@ final class KnownCookies
                     self::cookie('necessary', 'm', '.stripe.com', '2 years', 'Supports fraud prevention and secure payment processing by Stripe.'),
                 ],
             ],
+            'tiktok' => [
+                'label' => 'TikTok Ads',
+                'cookies' => [
+                    self::cookie('advertisement', '_ttp', null, '13 months', 'TikTok sets this cookie to recognise visitors, measure advertising performance and personalise advertising.'),
+                    self::cookie('advertisement', '_ttp', '.tiktok.com', '13 months', 'TikTok sets this third-party cookie to recognise visitors across websites, measure advertising performance and personalise advertising.'),
+                    self::cookie('advertisement', 'ttcsid', null, '13 months', 'TikTok sets this cookie to identify visitor sessions and measure interactions for advertising attribution and campaign optimisation.'),
+                    self::cookie('advertisement', 'ttcsid_*', null, '13 months', 'TikTok sets this pixel-specific cookie to identify visitor sessions and measure interactions for advertising attribution and campaign optimisation.'),
+                    self::cookie('advertisement', 'ttclid', null, '13 months', 'TikTok sets this cookie to associate website activity and conversions with a TikTok advertisement click.'),
+                ],
+            ],
         ];
     }
 
